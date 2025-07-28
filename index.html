@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hill Climb Racer - Jetpack & Stunts (Fixed)</title>
+    <title>Hill Climb Racer - Final Fixes</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         /* Basic styles for the page */
@@ -59,7 +59,7 @@
             opacity: 0;
         }
         
-        #mountains, #desert-bg, #moon-bg {
+        #mountains, #desert-bg, #moon-bg, #volcano-bg, #arctic-bg {
             background-size: 50% 60%;
             z-index: 1;
         }
@@ -73,13 +73,28 @@
              background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><circle cx="100" cy="350" r="50" fill="%23555"/><circle cx="500" cy="380" r="80" fill="%23444"/><circle cx="700" cy="320" r="60" fill="%23666"/></svg>');
              background-size: 30% 30%;
          }
+         #volcano-bg {
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400"><path fill="%234a4a4a" d="M0 400 L0 300 L200 150 L400 350 L600 200 L800 380 L1000 250 L1200 320 L1200 400 Z" /><path fill="%23c0392b" opacity="0.5" d="M0 400 L0 350 L150 300 L300 380 L450 320 L600,400 Z" /><path fill="%23e67e22" opacity="0.3" d="M500 400 L600 280 L750 350 L850 300 L1000,400 Z" /></svg>');
+         }
+         #arctic-bg {
+             background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400"><path fill="%23ecf0f1" d="M0 400 L0 250 L250 350 L500 200 L750 380 L1000 280 L1200 350 L1200 400 Z" /><path fill="%23bdc3c7" opacity="0.5" d="M0 400 L0 320 L150 280 L400 380 L650 300 L900 390 L1100 320 L1200 400 Z" /></svg>');
+         }
 
-        #clouds-far, #stars-far {
+        #clouds-far, #stars-far, #snow-far {
             background-size: 40%;
             z-index: 2;
         }
         #clouds-far {
             background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200"><path fill="rgba(255,255,255,0.4)" d="M100 100 Q150 50 200 100 T300 100 M400 120 Q450 70 500 120 T600 120 M650 90 Q700 40 750 90 T850 90" /></svg>');
+        }
+        #snow-far {
+             background-image: radial-gradient(2px 2px at 20px 30px, white, rgba(255,255,255,0)), radial-gradient(2px 2px at 90px 80px, white, rgba(255,255,255,0)), radial-gradient(3px 3px at 150px 120px, white, rgba(255,255,255,0));
+             background-size: 150px 150px;
+             animation: fall 10s linear infinite;
+        }
+        
+        @keyframes fall {
+            to { transform: translateY(150px); }
         }
         
         #stars-far {
@@ -108,13 +123,13 @@
             z-index: 20;
         }
         
-        /* Stunt message text */
+        /* Stunt/Combo message text */
         #stunt-text {
             position: absolute;
             top: 30%;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 3em;
+            font-size: clamp(2em, 8vmin, 4em);
             font-weight: bold;
             color: #f1c40f;
             text-shadow: 3px 3px 0 #c0392b, -1px -1px 0 #c0392b, 1px -1px 0 #c0392b, -1px 1px 0 #c0392b, 1px 1px 0 #c0392b;
@@ -132,20 +147,21 @@
         /* Top UI container */
         .top-ui {
             width: 100%;
-            padding: 20px;
+            padding: 10px;
             box-sizing: border-box;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 15px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .info-box {
             background-color: rgba(0, 0, 0, 0.6);
             color: white;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 20px;
-            font-size: 1.5em;
+            font-size: clamp(1em, 3.5vmin, 1.5em);
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             border: 2px solid rgba(255, 255, 255, 0.5);
@@ -157,51 +173,94 @@
              content: '💰';
              margin-right: 10px;
         }
-
-        .fuel-container, .jetpack-container {
-            width: 200px;
-            height: 30px;
+        
+        .status-bar-container {
+            width: clamp(150px, 30vw, 220px);
+            height: 25px;
             background-color: rgba(0, 0, 0, 0.6);
-            border-radius: 15px;
+            border-radius: 12.5px;
             border: 2px solid rgba(255, 255, 255, 0.5);
             overflow: hidden;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: relative;
         }
         
-        #fuel-bar {
+        .status-bar {
             width: 100%;
             height: 100%;
-            background: linear-gradient(to right, #f9d423, #ff4e50);
-            border-radius: 12px 0 0 12px;
+            border-radius: 10.5px 0 0 10.5px;
             transition: width 0.2s ease-in-out;
         }
 
-        #jetpack-bar {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to right, #00d2ff, #3a7bd5);
-            border-radius: 12px 0 0 12px;
-            transition: width 0.2s ease-in-out;
+        #health-bar { background: linear-gradient(to right, #e74c3c, #c0392b); }
+        #fuel-bar { background: linear-gradient(to right, #2ecc71, #27ae60); }
+        #jetpack-bar { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
+        
+        .status-bar-container::before {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            text-shadow: 1px 1px 2px black;
         }
         
+        #health-container::before { content: '❤️'; }
+        #fuel-container::before { content: '🔥'; }
+        #jetpack-container::before { content: '🚀'; }
+        
+        .info-box-cluster {
+            display:flex; 
+            flex-direction:column; 
+            gap: 10px;
+        }
+        .right-cluster {
+            align-items: flex-end;
+        }
+        
+        /* Flip timer */
+        #flip-timer-container {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: clamp(250px, 50vw, 350px);
+            height: 30px;
+            background-color: rgba(0,0,0,0.7);
+            border: 2px solid #e74c3c;
+            border-radius: 15px;
+            display: none; /* Hidden by default */
+            z-index: 1001;
+        }
+        #flip-timer-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #f1c40f, #e74c3c);
+            border-radius: 12px;
+            transition: width 0.1s linear;
+        }
+
+
         /* Bottom controls */
         .controls-ui {
             width: 100%;
             padding: 20px;
             box-sizing: border-box;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: flex-end;
             pointer-events: auto;
         }
 
         .control-button {
-            width: 100px;
-            height: 100px;
+            width: clamp(80px, 20vmin, 120px);
+            height: clamp(80px, 20vmin, 120px);
             background: rgba(0, 0, 0, 0.3);
             border: 3px solid rgba(255, 255, 255, 0.5);
             border-radius: 50%;
-            font-size: 3em;
+            font-size: clamp(2em, 8vmin, 4em);
             color: white;
             cursor: pointer;
             user-select: none;
@@ -210,6 +269,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+        
+        #jetpack-button {
+             width: clamp(70px, 18vmin, 100px);
+            height: clamp(70px, 18vmin, 100px);
+            font-size: clamp(1.5em, 6vmin, 3em);
+            border-color: #00d2ff;
         }
 
         .control-button:active {
@@ -241,6 +307,9 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
         }
         
         .modal-screen.active {
@@ -274,8 +343,16 @@
             transition: all 0.2s ease;
             margin: 10px;
         }
+        
+        .modal-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
 
-        .modal-button:hover {
+
+        .modal-button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 15px rgba(0,0,0,0.5);
         }
@@ -304,6 +381,8 @@
             margin-top: 15px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
+            max-width: 900px;
         }
 
         .selection-option {
@@ -331,11 +410,11 @@
         /* Upgrade screen styles */
         #upgrade-list {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr;
+            gap: 15px;
             margin-top: 20px;
             width: 90%;
-            max-width: 600px;
+            max-width: 500px;
         }
         .upgrade-item {
             background: rgba(0,0,0,0.3);
@@ -372,37 +451,90 @@
             cursor: not-allowed;
         }
 
+        /* Daily Challenges styles */
+        #challenges-container {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 700px;
+        }
+        .challenge {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .challenge-text { text-align: left; flex-grow: 1;}
+        .challenge-progress { font-style: italic; color: #ccc; }
+        .claim-button {
+            padding: 8px 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: black;
+            background-color: #2ecc71;
+            border: none;
+            border-radius: 8px;
+            margin-left: 15px;
+        }
+        
+        @media (min-width: 600px) {
+            #upgrade-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (orientation: portrait) and (max-height: 800px) {
+             .modal-screen h2 {
+                margin: 10px 0 5px 0;
+             }
+             .selection-container {
+                margin-top: 5px;
+             }
+        }
     </style>
-</head>
+<script defer data-domain="copper-elga-72.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiny.host/ad-script.js"></script><script defer data-domain="copper-elga-72.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiny.host/ad-script.js"></script></head>
 <body>
     <div id="sky-gradient"></div>
     <div id="game-wrapper">
         <div id="mountains" class="parallax-bg"></div>
         <div id="desert-bg" class="parallax-bg"></div>
         <div id="moon-bg" class="parallax-bg"></div>
+        <div id="volcano-bg" class="parallax-bg"></div>
+        <div id="arctic-bg" class="parallax-bg"></div>
         <div id="clouds-far" class="parallax-bg"></div>
         <div id="stars-far" class="parallax-bg"></div>
+        <div id="snow-far" class="parallax-bg"></div>
 
         <div id="game-container"></div>
         <div id="stunt-text"></div>
         <div id="hills_fg" class="parallax-bg"></div>
+        <div id="flip-timer-container"><div id="flip-timer-bar"></div></div>
 
         <div id="ui-overlay" class="ui-overlay">
             <div class="top-ui">
-                <div class="info-box-cluster" style="display:flex; flex-direction:column; gap: 10px;">
+                <div class="info-box-cluster left-cluster">
                     <div id="score" class="info-box">Score: 0</div>
                     <div id="coin-counter" class="info-box coins">0</div>
                 </div>
-                <div class="info-box-cluster" style="display:flex; flex-direction:column; align-items:flex-end; gap: 10px;">
-                    <div class="fuel-container">
-                        <div id="fuel-bar"></div>
+                <div class="info-box-cluster right-cluster">
+                    <div id="health-container" class="status-bar-container">
+                        <div id="health-bar" class="status-bar"></div>
                     </div>
-                    <div class="jetpack-container">
-                        <div id="jetpack-bar"></div>
+                    <div id="fuel-container" class="status-bar-container">
+                        <div id="fuel-bar" class="status-bar"></div>
+                    </div>
+                    <div id="jetpack-container" class="status-bar-container">
+                        <div id="jetpack-bar" class="status-bar"></div>
                     </div>
                 </div>
             </div>
             <div class="controls-ui">
+                 <div class="button-cluster">
+                    <button id="jetpack-button" class="control-button">🚀</button>
+                </div>
                 <div class="button-cluster">
                     <button id="brake-button" class="control-button">⤺</button>
                     <button id="gas-button" class="control-button">⤼</button>
@@ -414,13 +546,14 @@
             <h1>Hill Racer</h1>
             
             <h2>Select Vehicle</h2>
-            <div id="car-selection" class="selection-container">
-                <!-- Car options populated by JS -->
-            </div>
+            <div id="car-selection" class="selection-container"></div>
             
             <h2>Select Map</h2>
-            <div id="map-selection" class="selection-container">
-                <!-- Map options populated by JS -->
+            <div id="map-selection" class="selection-container"></div>
+            
+            <div id="challenges-container">
+                 <h2>Daily Challenges</h2>
+                 <div id="challenge-list"></div>
             </div>
 
             <div class="modal-button-group">
@@ -428,7 +561,7 @@
                 <button id="start-button" class="modal-button">Start Driving</button>
             </div>
             <p style="font-size: 1.2em; margin-top: 20px;">Total Coins: <span id="total-coins-start">0</span> 💰</p>
-            <p style="margin-top:20px; font-size:1.1em; color: #ccc;">Controls: Arrow Keys & Spacebar (for Jetpack)</p>
+            <p style="margin-top:20px; font-size:1.1em; color: #ccc;">Controls: Arrow Keys & Spacebar (or 🚀 button)</p>
         </div>
 
         <div id="game-over-screen" class="modal-screen">
@@ -459,6 +592,7 @@
             const uiOverlay = document.getElementById('ui-overlay');
             const scoreElement = document.getElementById('score');
             const coinElement = document.getElementById('coin-counter');
+            const healthBarElement = document.getElementById('health-bar');
             const fuelBarElement = document.getElementById('fuel-bar');
             const jetpackBarElement = document.getElementById('jetpack-bar');
             const startScreen = document.getElementById('start-screen');
@@ -473,6 +607,7 @@
             const upgradeCloseButton = document.getElementById('upgrade-close-button');
             const gasButton = document.getElementById('gas-button');
             const brakeButton = document.getElementById('brake-button');
+            const jetpackButton = document.getElementById('jetpack-button');
             const carSelectionContainer = document.getElementById('car-selection');
             const mapSelectionContainer = document.getElementById('map-selection');
             const upgradeList = document.getElementById('upgrade-list');
@@ -480,96 +615,150 @@
             const totalCoinsUpgrade = document.getElementById('total-coins-upgrade');
             const skyGradient = document.getElementById('sky-gradient');
             const stuntTextElement = document.getElementById('stunt-text');
+            const challengeListContainer = document.getElementById('challenge-list');
+            const flipTimerContainer = document.getElementById('flip-timer-container');
+            const flipTimerBar = document.getElementById('flip-timer-bar');
             
             // --- Game State & Settings ---
             let engine, render, runner, world, car;
-            let groundSegments = [], fuelCans = [], coins = [];
-            let score = 0, maxTravel = 0, coinsCollected = 0, fuel = 100, jetpackFuel = 100;
-            let isGameOver = false, keys = {}, isGasPressed = false, isBrakePressed = false;
+            let groundSegments = [], fuelCans = [], coins = [], mines = [], healthPacks = [], jetpackCans = [];
+            let score = 0, maxTravel = 0, coinsCollected = 0, health = 100, fuel = 100, jetpackFuel = 0;
+            let isGameOver = false, keys = {}, isGasPressed = false, isBrakePressed = false, isJetpackPressed = false;
             let selectedCarType = 'rally';
             let selectedBiome = 'hills';
             const TERRAIN_SETTINGS = { segmentWidth: 100, yOffset: window.innerHeight * 0.8, initialSegments: 50, lookahead: 20 };
-            let audioContext, engineSound, coinSoundGain, jetpackSoundGain;
+            let audioContext, engineSound, coinSoundGain, jetpackSoundGain, explosionSoundGain;
             let audioInitialized = false;
             let totalPlayerCoins = 0;
             let currentBiome;
             let previousScreen = 'start';
             
-            // --- Stunt System State ---
+            // --- Stunt, Combo, Challenge, & Flip Mechanic State ---
             let airTime = 0, totalRotation = 0, lastAngle = 0, justLanded = false, landingVelocity = 0;
-            let flameParticles = [];
+            let isFlipped = false, flipTimer = 0;
+            const FLIP_RECOVERY_TIME = 6000; // 6 seconds
+            let dailyChallenges = [];
+            let challengeProgress = {};
+            let explosionParticles = [];
 
             // --- Biome Definitions ---
             const BIOMES = {
-                hills: {
-                    id: 'hills',
-                    name: 'Green Hills',
-                    gravity: 1,
-                    roughness: 0.55, // Tweaked for more jumps
-                    skyColors: { dayTop: {r: 135, g: 206, b: 235}, dayBot: {r: 70, g: 130, b: 180}, nightTop: {r: 10, g: 20, b: 40}, nightBot: {r: 40, g: 50, b: 80} },
-                    terrainColors: { top: '#4CAF50', mid: '#5D4037', bot: '#3E2723' },
-                    backgrounds: ['mountains', 'clouds-far'],
-                    preview: 'linear-gradient(to bottom, #87CEEB, #4682B4)'
-                },
-                desert: {
-                    id: 'desert',
-                    name: 'Desert Dunes',
-                    gravity: 1,
-                    roughness: 0.45, // Tweaked
-                    skyColors: { dayTop: {r: 252, g: 217, b: 132}, dayBot: {r: 247, g: 172, b: 94}, nightTop: {r: 30, g: 30, b: 50}, nightBot: {r: 60, g: 50, b: 70} },
-                    terrainColors: { top: '#D2B48C', mid: '#C19A6B', bot: '#8B7355' },
-                    backgrounds: ['desert-bg', 'clouds-far'],
-                    preview: 'linear-gradient(to bottom, #FCD984, #F7AC5E)'
-                },
-                moon: {
-                    id: 'moon',
-                    name: 'The Moon',
-                    gravity: 0.4,
-                    roughness: 0.7, // Tweaked
-                    skyColors: { dayTop: {r: 10, g: 10, b: 20}, dayBot: {r: 0, g: 0, b: 0}, nightTop: {r: 10, g: 10, b: 20}, nightBot: {r: 0, g: 0, b: 0} },
-                    terrainColors: { top: '#8e7cc3', mid: '#544488', bot: '#3b2f63' },
-                    backgrounds: ['moon-bg', 'stars-far'],
-                    preview: 'linear-gradient(to bottom, #0a0a14, #000)'
-                }
+                hills: { id: 'hills', name: 'Green Hills', gravity: 1, roughness: 0.55, friction: 1.0, skyColors: { dayTop: {r: 135, g: 206, b: 235}, dayBot: {r: 70, g: 130, b: 180}, nightTop: {r: 10, g: 20, b: 40}, nightBot: {r: 40, g: 50, b: 80} }, terrainColors: { top: '#4CAF50', mid: '#5D4037', bot: '#3E2723' }, backgrounds: ['mountains', 'clouds-far'], preview: 'linear-gradient(to bottom, #87CEEB, #4682B4)' },
+                desert: { id: 'desert', name: 'Desert Dunes', gravity: 1, roughness: 0.45, friction: 0.8, skyColors: { dayTop: {r: 252, g: 217, b: 132}, dayBot: {r: 247, g: 172, b: 94}, nightTop: {r: 30, g: 30, b: 50}, nightBot: {r: 60, g: 50, b: 70} }, terrainColors: { top: '#D2B48C', mid: '#C19A6B', bot: '#8B7355' }, backgrounds: ['desert-bg', 'clouds-far'], preview: 'linear-gradient(to bottom, #FCD984, #F7AC5E)' },
+                moon: { id: 'moon', name: 'The Moon', gravity: 0.4, roughness: 0.7, friction: 1.2, skyColors: { dayTop: {r: 10, g: 10, b: 20}, dayBot: {r: 0, g: 0, b: 0}, nightTop: {r: 10, g: 10, b: 20}, nightBot: {r: 0, g: 0, b: 0} }, terrainColors: { top: '#8e7cc3', mid: '#544488', bot: '#3b2f63' }, backgrounds: ['moon-bg', 'stars-far'], preview: 'linear-gradient(to bottom, #0a0a14, #000)' },
+                volcano: { id: 'volcano', name: 'Volcano', gravity: 1.1, roughness: 0.65, friction: 1.1, skyColors: { dayTop: {r: 50, g: 20, b: 20}, dayBot: {r: 150, g: 50, b: 20}, nightTop: {r: 20, g: 10, b: 10}, nightBot: {r: 40, g: 15, b: 10} }, terrainColors: { top: '#4d4d4d', mid: '#363636', bot: '#1c1c1c' }, backgrounds: ['volcano-bg'], preview: 'linear-gradient(to bottom, #321414, #963214)' },
+                arctic: { id: 'arctic', name: 'Arctic', gravity: 0.95, roughness: 0.3, friction: 0.3, skyColors: { dayTop: {r: 210, g: 230, b: 255}, dayBot: {r: 150, g: 180, b: 220}, nightTop: {r: 20, g: 30, b: 60}, nightBot: {r: 40, g: 60, b: 100} }, terrainColors: { top: '#ffffff', mid: '#e0e0ff', bot: '#c0c0e0' }, backgrounds: ['arctic-bg', 'snow-far'], preview: 'linear-gradient(to bottom, #d2e6ff, #96b4dc)' }
             };
 
             // --- Car & Upgrade Definitions ---
             const CAR_DEFINITIONS = {
-                rally: {
-                    name: "Rally Car",
-                    description: "A balanced classic.",
-                    jetpackOffset: -75,
-                    menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-20 -20 180 100'><g id='carBody'><defs><linearGradient id='gradRally' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23e74c3c'/><stop offset='100%' stop-color='%23c0392b'/></linearGradient><linearGradient id='winRally' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M10 25 L25 10 H110 L135 30 H125 L110 40 H20 L10 25 Z' fill='url(%23gradRally)'/><path d='M28 11 H70 L60 2 H40 Z' fill='url(%23winRally)'/></g><circle cx='35' cy='45' r='18' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='2' /><circle cx='105' cy='45' r='18' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='2' /></svg>",
-                    body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 50'><defs><linearGradient id='gradRallyB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23e74c3c'/><stop offset='100%' stop-color='%23c0392b'/></linearGradient><linearGradient id='winRallyB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M10 25 L25 10 H110 L135 30 H125 L110 40 H20 L10 25 Z' fill='url(%23gradRallyB)'/><path d='M28 11 H70 L60 2 H40 Z' fill='url(%23winRallyB)'/></svg>",
-                    create: createRallyCar,
-                    upgrades: { engine: { label: "Engine", level: 0, costs: [10, 25, 50, 100], values: [0.1, 0.12, 0.14, 0.16, 0.18] }, fuel: { label: "Fuel Tank", level: 0, costs: [5, 15, 30, 60], values: [100, 120, 140, 160, 180] }, tires: { label: "Tires", level: 0, costs: [8, 20, 40, 80], values: [0.8, 0.85, 0.9, 0.95, 1.0] }, suspension: { label: "Suspension", level: 0, costs: [12, 28, 55, 110], values: [0.2, 0.18, 0.16, 0.14, 0.12] },}
-                },
-                truck: {
-                    name: "Monster Truck",
-                    description: "Powerful with massive grip.",
-                    jetpackOffset: -80,
-                    menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-20 -10 200 120'><g id='carBody'><defs><linearGradient id='gradTruck' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%233498db'/><stop offset='100%' stop-color='%232980b9'/></linearGradient><linearGradient id='winTruck' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M0 30 H150 V55 H0 Z' fill='url(%23gradTruck)'/><path d='M20 5 H80 V30 H20 Z' fill='url(%23gradTruck)'/><path d='M23 7 H77 V20 H23 Z' fill='url(%23winTruck)'/></g><circle cx='40' cy='65' r='35' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='3'/><circle cx='110' cy='65' r='35' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='3'/></svg>",
-                    body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 80'><defs><linearGradient id='gradTruckB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%233498db'/><stop offset='100%' stop-color='%232980b9'/></linearGradient><linearGradient id='winTruckB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M0 30 H150 V55 H0 Z' fill='url(%23gradTruckB)'/><path d='M20 5 H80 V30 H20 Z' fill='url(%23gradTruckB)'/><path d='M23 7 H77 V20 H23 Z' fill='url(%23winTruckB)'/></svg>",
-                    create: createMonsterTruck,
-                     upgrades: { engine: { label: "Engine", level: 0, costs: [15, 30, 60, 120], values: [0.18, 0.21, 0.24, 0.27, 0.3] }, fuel: { label: "Fuel Tank", level: 0, costs: [5, 15, 30, 60], values: [100, 120, 140, 160, 180] }, tires: { label: "Tires", level: 0, costs: [10, 25, 50, 100], values: [0.9, 0.95, 1.0, 1.05, 1.1] }, suspension: { label: "Suspension", level: 0, costs: [10, 22, 45, 90], values: [0.1, 0.09, 0.08, 0.07, 0.06] },}
-                },
-                sports: {
-                    name: "Sports Car",
-                    description: "Extremely fast and unstable.",
-                    jetpackOffset: -85,
-                    menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-10 -15 180 90'><g id='carBody'><defs><linearGradient id='gradSports' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23f1c40f'/><stop offset='100%' stop-color='%23f39c12'/></linearGradient><linearGradient id='winSports' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2355efc4'/><stop offset='100%' stop-color='%2300b894'/></linearGradient></defs><path d='M5 25 L30 8 H130 L155 25 L145 35 H15 Z' fill='url(%23gradSports)'/><path d='M40 9 H90 L100 2 H50 Z' fill='url(%23winSports)'/></g><circle cx='40' cy='40' r='18' fill='%231e272e' stroke='%23ecf0f1' stroke-width='2' /><circle cx='120' cy='40' r='18' fill='%231e272e' stroke='%23ecf0f1' stroke-width='2' /></svg>",
-                    body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 45'><defs><linearGradient id='gradSportsB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23f1c40f'/><stop offset='100%' stop-color='%23f39c12'/></linearGradient><linearGradient id='winSportsB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2355efc4'/><stop offset='100%' stop-color='%2300b894'/></linearGradient></defs><path d='M5 25 L30 8 H130 L155 25 L145 35 H15 Z' fill='url(%23gradSportsB)'/><path d='M40 9 H90 L100 2 H50 Z' fill='url(%23winSportsB)'/></svg>",
-                    create: createSportsCar,
-                    upgrades: { engine: { label: "Engine", level: 0, costs: [20, 40, 80, 150], values: [0.07, 0.08, 0.09, 0.1, 0.11] }, fuel: { label: "Fuel Tank", level: 0, costs: [5, 15, 30, 60], values: [100, 115, 130, 145, 160] }, tires: { label: "Tires", level: 0, costs: [5, 15, 30, 60], values: [0.7, 0.72, 0.74, 0.76, 0.78] }, suspension: { label: "Suspension", level: 0, costs: [15, 35, 70, 140], values: [0.4, 0.35, 0.3, 0.25, 0.2] },}
-                }
+                rally: { name: "Rally Car", description: "A balanced classic.", menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-20 -20 180 100'><g id='carBody'><defs><linearGradient id='gradRally' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23e74c3c'/><stop offset='100%' stop-color='%23c0392b'/></linearGradient><linearGradient id='winRally' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M10 25 L25 10 H110 L135 30 H125 L110 40 H20 L10 25 Z' fill='url(%23gradRally)'/><path d='M28 11 H70 L60 2 H40 Z' fill='url(%23winRally)'/></g><circle cx='35' cy='45' r='18' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='2' /><circle cx='105' cy='45' r='18' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='2' /></svg>", body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 50'><defs><linearGradient id='gradRallyB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23e74c3c'/><stop offset='100%' stop-color='%23c0392b'/></linearGradient><linearGradient id='winRallyB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M10 25 L25 10 H110 L135 30 H125 L110 40 H20 L10 25 Z' fill='url(%23gradRallyB)'/><path d='M28 11 H70 L60 2 H40 Z' fill='url(%23winRallyB)'/></svg>", create: createRallyCar, upgrades: { engine: { label: "Engine", level: 0, costs: [10, 25, 50, 100], values: [0.1, 0.12, 0.14, 0.16, 0.18] }, fuel: { label: "Fuel Tank", level: 0, costs: [5, 15, 30, 60], values: [100, 120, 140, 160, 180] }, tires: { label: "Tires", level: 0, costs: [8, 20, 40, 80], values: [0.8, 0.85, 0.9, 0.95, 1.0] }, suspension: { label: "Suspension", level: 0, costs: [12, 28, 55, 110], values: [0.2, 0.18, 0.16, 0.14, 0.12] }}},
+                truck: { name: "Monster Truck", description: "Powerful with massive grip.", menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-20 -10 200 120'><g id='carBody'><defs><linearGradient id='gradTruck' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%233498db'/><stop offset='100%' stop-color='%232980b9'/></linearGradient><linearGradient id='winTruck' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M0 30 H150 V55 H0 Z' fill='url(%23gradTruck)'/><path d='M20 5 H80 V30 H20 Z' fill='url(%23gradTruck)'/><path d='M23 7 H77 V20 H23 Z' fill='url(%23winTruck)'/></g><circle cx='40' cy='65' r='35' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='3'/><circle cx='110' cy='65' r='35' fill='%232c3e50' stroke='%23bdc3c7' stroke-width='3'/></svg>", body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 80'><defs><linearGradient id='gradTruckB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%233498db'/><stop offset='100%' stop-color='%232980b9'/></linearGradient><linearGradient id='winTruckB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2381ecec'/><stop offset='100%' stop-color='%2374b9ff'/></linearGradient></defs><path d='M0 30 H150 V55 H0 Z' fill='url(%23gradTruckB)'/><path d='M20 5 H80 V30 H20 Z' fill='url(%23gradTruckB)'/><path d='M23 7 H77 V20 H23 Z' fill='url(%23winTruckB)'/></svg>", create: createMonsterTruck, upgrades: { engine: { label: "Engine", level: 0, costs: [15, 30, 60, 120], values: [0.18, 0.21, 0.24, 0.27, 0.3] }, fuel: { label: "Fuel Tank", level: 0, costs: [5, 15, 30, 60], values: [100, 120, 140, 160, 180] }, tires: { label: "Tires", level: 0, costs: [10, 25, 50, 100], values: [0.9, 0.95, 1.0, 1.05, 1.1] }, suspension: { label: "Suspension", level: 0, costs: [10, 22, 45, 90], values: [0.1, 0.09, 0.08, 0.07, 0.06] }}},
+                sports: { name: "Sports Car", description: "Extremely fast and unstable.", menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-10 -15 180 90'><g id='carBody'><defs><linearGradient id='gradSports' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23f1c40f'/><stop offset='100%' stop-color='%23f39c12'/></linearGradient><linearGradient id='winSports' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2355efc4'/><stop offset='100%' stop-color='%2300b894'/></linearGradient></defs><path d='M5 25 L30 8 H130 L155 25 L145 35 H15 Z' fill='url(%23gradSports)'/><path d='M40 9 H90 L100 2 H50 Z' fill='url(%23winSports)'/></g><circle cx='40' cy='40' r='18' fill='%231e272e' stroke='%23ecf0f1' stroke-width='2' /><circle cx='120' cy='40' r='18' fill='%231e272e' stroke='%23ecf0f1' stroke-width='2' /></svg>", body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 45'><defs><linearGradient id='gradSportsB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%23f1c40f'/><stop offset='100%' stop-color='%23f39c12'/></linearGradient><linearGradient id='winSportsB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%2355efc4'/><stop offset='100%' stop-color='%2300b894'/></linearGradient></defs><path d='M5 25 L30 8 H130 L155 25 L145 35 H15 Z' fill='url(%23gradSportsB)'/><path d='M40 9 H90 L100 2 H50 Z' fill='url(%23winSportsB)'/></svg>", create: createSportsCar, upgrades: { engine: { label: "Engine", level: 0, costs: [20, 40, 80, 150], values: [0.07, 0.08, 0.09, 0.1, 0.11] }, fuel: { label: "Fuel Tank", level: 0, costs: [5, 15, 30, 60], values: [100, 115, 130, 145, 160] }, tires: { label: "Tires", level: 0, costs: [5, 15, 30, 60], values: [0.7, 0.72, 0.74, 0.76, 0.78] }, suspension: { label: "Suspension", level: 0, costs: [15, 35, 70, 140], values: [0.4, 0.35, 0.3, 0.25, 0.2] }}},
+                buggy: { name: "Dune Buggy", description: "Lightweight and bouncy.", menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -10 160 100'><g id='carBody'><defs><linearGradient id='gradBuggy' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%232ecc71'/><stop offset='100%' stop-color='%2327ae60'/></linearGradient></defs><path d='M10 40 L30 50 H130 L150 40' fill='url(%23gradBuggy)' stroke='%2316a085' stroke-width='2'/><path d='M30 40 A 50 50 0 0 1 130 40' fill='none' stroke='black' stroke-width='6'/><rect x='40' y='20' width='80' height='20' fill='none' stroke='black' stroke-width='4'/></g><circle cx='30' cy='55' r='20' fill='%2334495e' stroke='%2395a5a6' stroke-width='3'/><circle cx='130' cy='55' r='20' fill='%2334495e' stroke='%2395a5a6' stroke-width='3'/></svg>", body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 60'><defs><linearGradient id='gradBuggyB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%232ecc71'/><stop offset='100%' stop-color='%2327ae60'/></linearGradient></defs><path d='M10 40 L30 50 H130 L150 40' fill='url(%23gradBuggyB)' stroke='%2316a085' stroke-width='2'/><path d='M30 40 A 50 50 0 0 1 130 40' fill='none' stroke='black' stroke-width='6'/><rect x='40' y='20' width='80' height='20' fill='none' stroke='black' stroke-width='4'/></svg>", create: createDuneBuggy, upgrades: { engine: { label: "Engine", level: 0, costs: [10, 20, 40, 80], values: [0.15, 0.17, 0.19, 0.21, 0.23] }, fuel: { label: "Fuel Tank", level: 0, costs: [5, 10, 20, 40], values: [90, 100, 110, 120, 130] }, tires: { label: "Tires", level: 0, costs: [10, 20, 40, 80], values: [0.6, 0.65, 0.7, 0.75, 0.8] }, suspension: { label: "Suspension", level: 0, costs: [20, 40, 80, 160], values: [0.05, 0.04, 0.03, 0.02, 0.01] }}},
+                jeep: { name: "Super Jeep", description: "Heavy, stable, and strong.", menu_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -10 180 110'><g id='carBody'><defs><linearGradient id='gradJeep' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%239b59b6'/><stop offset='100%' stop-color='%238e44ad'/></linearGradient></defs><path d='M10 20 L30 20 L40 10 H130 L150 20 V50 H10 Z' fill='url(%23gradJeep)'/><rect x='0' y='50' width='160' height='10' fill='black'/></g><circle cx='40' cy='60' r='25' fill='%233d3d3d' stroke='white' stroke-width='3'/><circle cx='120' cy='60' r='25' fill='%233d3d3d' stroke='white' stroke-width='3'/></svg>", body_sprite: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 70'><defs><linearGradient id='gradJeepB' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='%239b59b6'/><stop offset='100%' stop-color='%238e44ad'/></linearGradient></defs><path d='M10 20 L30 20 L40 10 H130 L150 20 V50 H10 Z' fill='url(%23gradJeepB)'/><rect x='0' y='50' width='160' height='10' fill='black'/></svg>", create: createSuperJeep, upgrades: { engine: { label: "Engine", level: 0, costs: [12, 25, 50, 100], values: [0.12, 0.14, 0.16, 0.18, 0.20] }, fuel: { label: "Fuel Tank", level: 0, costs: [8, 18, 36, 72], values: [110, 130, 150, 170, 190] }, tires: { label: "Tires", level: 0, costs: [15, 30, 60, 120], values: [1.0, 1.1, 1.2, 1.3, 1.4] }, suspension: { label: "Suspension", level: 0, costs: [8, 16, 32, 64], values: [0.15, 0.13, 0.11, 0.09, 0.07] }}}
             };
             
+            // --- DAILY CHALLENGES ---
+            const ALL_CHALLENGES = [
+                { id: 'travel_hills', text: (v) => `Travel ${v}m in the Green Hills`, target: 5000, reward: 100, type: 'distance', biome: 'hills' },
+                { id: 'travel_desert', text: (v) => `Travel ${v}m in the Desert`, target: 5000, reward: 100, type: 'distance', biome: 'desert' },
+                { id: 'travel_moon', text: (v) => `Travel ${v}m on the Moon`, target: 2000, reward: 100, type: 'distance', biome: 'moon' },
+                { id: 'perform_flips', text: (v) => `Perform ${v} flips in a single run`, target: 10, reward: 75, type: 'flips' },
+                { id: 'collect_coins', text: (v) => `Collect ${v} coins in a single run`, target: 100, reward: 50, type: 'coins' },
+                { id: 'collect_health', text: (v) => `Collect ${v} health packs`, target: 5, reward: 60, type: 'healthPacks' },
+                { id: 'destroy_mines', text: (v) => `Destroy ${v} mines`, target: 5, reward: 80, type: 'mines' },
+            ];
+            
+            function generateDailyChallenges() {
+                const today = new Date().toDateString();
+                const lastChallengeDate = sessionStorage.getItem('challengeDate');
+                if (lastChallengeDate === today) {
+                    dailyChallenges = JSON.parse(sessionStorage.getItem('dailyChallenges'));
+                    return;
+                }
+                
+                let availableChallenges = [...ALL_CHALLENGES];
+                dailyChallenges = [];
+                for(let i=0; i<3; i++) {
+                    if (availableChallenges.length === 0) break;
+                    const challengeIndex = Math.floor(Math.random() * availableChallenges.length);
+                    const challenge = { ...availableChallenges.splice(challengeIndex, 1)[0] }; // Clone it
+                    delete challenge.text; // Remove function before storing
+                    dailyChallenges.push({ ...challenge, progress: 0, completed: false });
+                }
+                sessionStorage.setItem('challengeDate', today);
+                sessionStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
+            }
+            
+            function displayChallenges() {
+                challengeListContainer.innerHTML = '';
+                dailyChallenges.forEach((challenge, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'challenge';
+                    
+                    const challengeTemplate = ALL_CHALLENGES.find(c => c.id === challenge.id);
+                    if (!challengeTemplate) return;
+
+                    const progressText = challenge.type.startsWith('travel') ? `${(challenge.progress / 1000).toFixed(1)}k` : challenge.progress;
+                    const targetText = challenge.type.startsWith('travel') ? `${(challenge.target / 1000)}k` : challenge.target;
+                    
+                    div.innerHTML = `
+                        <div class="challenge-text">
+                            ${challengeTemplate.text(challenge.target)}
+                            <div class="challenge-progress">(${progressText} / ${targetText})</div>
+                        </div>
+                        <button class="claim-button" data-index="${index}" ${!challenge.completed || challenge.claimed ? 'disabled' : ''}>
+                            ${challenge.claimed ? 'Claimed' : challenge.completed ? `Claim ${challenge.reward}💰` : 'In Progress'}
+                        </button>
+                    `;
+                    challengeListContainer.appendChild(div);
+                });
+            }
+            
+            function updateChallengeProgress(type, value, biome = null) {
+                dailyChallenges.forEach(challenge => {
+                    if (challenge.completed || challenge.claimed) return;
+                    
+                    let shouldUpdate = false;
+                    if (challenge.type === type) {
+                        if (challenge.type === 'distance' && challenge.biome === biome) {
+                            challenge.progress = Math.max(challenge.progress, value);
+                            shouldUpdate = true;
+                        } else if (challenge.type !== 'distance') {
+                            challenge.progress += value;
+                            shouldUpdate = true;
+                        }
+                    }
+                    
+                    if (challenge.progress >= challenge.target) {
+                        challenge.completed = true;
+                        shouldUpdate = true;
+                    }
+
+                    if (shouldUpdate) {
+                       sessionStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
+                    }
+                });
+            }
+            
+            function claimChallengeReward(index) {
+                const challenge = dailyChallenges[index];
+                if (challenge && challenge.completed && !challenge.claimed) {
+                    totalPlayerCoins += challenge.reward;
+                    challenge.claimed = true;
+                    sessionStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
+                    updateTotalCoinsDisplay();
+                    displayChallenges();
+                }
+            }
+
+
             // --- AUDIO HANDLING ---
             function initAudio() {
                 if (audioInitialized || audioContext) return;
                 try {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    // Engine Sound
                     engineSound = audioContext.createOscillator();
                     const engineGain = audioContext.createGain();
                     engineSound.type = 'square';
@@ -578,17 +767,9 @@
                     engineSound.connect(engineGain).connect(audioContext.destination);
                     engineSound.start();
                     engineSound.gainNode = engineGain;
-                    
-                    // Coin Sound
-                    coinSoundGain = audioContext.createGain();
-                    coinSoundGain.gain.value = 0;
-                    coinSoundGain.connect(audioContext.destination);
-
-                    // Jetpack Sound
-                    jetpackSoundGain = audioContext.createGain();
-                    jetpackSoundGain.gain.setValueAtTime(0, audioContext.currentTime);
-                    jetpackSoundGain.connect(audioContext.destination);
-
+                    coinSoundGain = audioContext.createGain(); coinSoundGain.gain.value = 0; coinSoundGain.connect(audioContext.destination);
+                    jetpackSoundGain = audioContext.createGain(); jetpackSoundGain.gain.setValueAtTime(0, audioContext.currentTime); jetpackSoundGain.connect(audioContext.destination);
+                    explosionSoundGain = audioContext.createGain(); explosionSoundGain.gain.value = 0; explosionSoundGain.connect(audioContext.destination);
                     audioInitialized = true;
                 } catch (e) { console.error("Audio could not be initialized:", e); }
             }
@@ -596,11 +777,13 @@
             function playCoinSound() { if (!audioInitialized) return; const osc = audioContext.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioContext.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1); coinSoundGain.gain.cancelScheduledValues(audioContext.currentTime); coinSoundGain.gain.setValueAtTime(0.3, audioContext.currentTime); coinSoundGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3); osc.connect(coinSoundGain); osc.start(); osc.stop(audioContext.currentTime + 0.3); }
             function playGameOverSound() { if (!audioInitialized) return; const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, audioContext.currentTime); osc.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 1); gain.gain.setValueAtTime(0.4, audioContext.currentTime); gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1); osc.connect(gain).connect(audioContext.destination); osc.start(); osc.stop(audioContext.currentTime + 1); }
             function setJetpackSound(active) { if (!audioInitialized) return; if(active){ const osc = audioContext.createOscillator(); const noise = audioContext.createBufferSource(); const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.5, audioContext.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) { data[i] = Math.random() * 2 - 1; } noise.buffer = buffer; noise.loop = true; osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioContext.currentTime); osc.frequency.linearRampToValueAtTime(300, audioContext.currentTime + 0.5); osc.connect(jetpackSoundGain); noise.connect(jetpackSoundGain); osc.start(); noise.start(); jetpackSoundGain.gain.setTargetAtTime(0.15, audioContext.currentTime, 0.1); setJetpackSound.sources = [osc, noise]; } else { if (setJetpackSound.sources) { setJetpackSound.sources.forEach(s => s.stop(audioContext.currentTime + 0.2)); } jetpackSoundGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.2); } }
+            function playExplosionSound() { if (!audioInitialized) return; const noise = audioContext.createBufferSource(); const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 1, audioContext.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) { data[i] = Math.random() * 2 - 1; } noise.buffer = buffer; const lowpass = audioContext.createBiquadFilter(); lowpass.type = "lowpass"; lowpass.frequency.setValueAtTime(2000, audioContext.currentTime); lowpass.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.8); explosionSoundGain.gain.cancelScheduledValues(audioContext.currentTime); explosionSoundGain.gain.setValueAtTime(0.8, audioContext.currentTime); explosionSoundGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1); noise.connect(lowpass).connect(explosionSoundGain).connect(audioContext.destination); noise.start(); noise.stop(audioContext.currentTime + 1); }
+            function playHealthSound() { if (!audioInitialized) return; const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, audioContext.currentTime); osc.frequency.linearRampToValueAtTime(1046.50, audioContext.currentTime + 0.2); gain.gain.setValueAtTime(0.3, audioContext.currentTime); gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3); osc.connect(gain).connect(audioContext.destination); osc.start(); osc.stop(audioContext.currentTime + 0.3); }
             
             // --- GAME INITIALIZATION & SETUP ---
             function setupUI() {
                 carSelectionContainer.innerHTML = '';
-                for (const type in CAR_DEFINITIONS) {
+                Object.keys(CAR_DEFINITIONS).forEach(type => {
                     const carDef = CAR_DEFINITIONS[type];
                     const option = document.createElement('div');
                     option.className = 'selection-option';
@@ -608,9 +791,9 @@
                     if (type === selectedCarType) option.classList.add('selected');
                     option.innerHTML = `<h3>${carDef.name}</h3><img src="${carDef.menu_sprite.replace(/"/g, "'")}" class="car-preview" alt="${carDef.name}"/><p>${carDef.description}</p>`;
                     carSelectionContainer.appendChild(option);
-                }
+                });
                 mapSelectionContainer.innerHTML = '';
-                for (const key in BIOMES) {
+                 Object.keys(BIOMES).forEach(key => {
                     const biome = BIOMES[key];
                     const option = document.createElement('div');
                     option.className = 'selection-option';
@@ -618,24 +801,29 @@
                     if (key === selectedBiome) option.classList.add('selected');
                     option.innerHTML = `<h3>${biome.name}</h3><div class="map-preview" style="background: ${biome.preview}"></div>`;
                     mapSelectionContainer.appendChild(option);
-                }
+                });
                 updateTotalCoinsDisplay();
+                displayChallenges();
             }
 
             function init() {
                 currentBiome = BIOMES[selectedBiome];
                 document.querySelectorAll('.parallax-bg').forEach(bg => bg.style.opacity = 0);
-                currentBiome.backgrounds.forEach(bgId => document.getElementById(bgId).style.opacity = 1);
+                currentBiome.backgrounds.forEach(bgId => { if(document.getElementById(bgId)) document.getElementById(bgId).style.opacity = 1});
                 const carDef = CAR_DEFINITIONS[selectedCarType];
+                health = 100;
                 fuel = carDef.upgrades.fuel.values[carDef.upgrades.fuel.level];
-                jetpackFuel = 100;
+                jetpackFuel = 0;
                 score = 0; maxTravel = 0; coinsCollected = 0;
                 airTime = 0; totalRotation = 0;
-                isGameOver = false; groundSegments = []; fuelCans = []; coins = [];
+                isGameOver = false; groundSegments = []; fuelCans = []; coins = []; mines = []; healthPacks = []; jetpackCans = [];
+                isFlipped = false; flipTimer = 0;
+                challengeProgress = { flips: 0, coins: 0, healthPacks: 0, mines: 0 };
                 keys = {}; isGasPressed = false; isBrakePressed = false;
                 startScreen.classList.remove('active');
                 gameOverScreen.classList.remove('active');
                 uiOverlay.style.display = 'flex';
+                flipTimerContainer.style.display = 'none';
                 engine = Engine.create();
                 world = engine.world;
                 world.gravity.y = currentBiome.gravity;
@@ -649,80 +837,26 @@
                 Render.run(render);
                 setupGameEventListeners();
                 Events.on(engine, 'beforeUpdate', gameLoop);
-                Events.on(render, 'afterRender', renderEffects);
             }
             
             // --- CAR CREATION ---
-            function createRallyCar(x, y) {
-                const group = Body.nextGroup(true);
-                const upgrades = CAR_DEFINITIONS.rally.upgrades;
-                const wheelFriction = upgrades.tires.values[upgrades.tires.level];
-                const wheelRadius = 18;
-                const chassis = Bodies.rectangle(x, y, 140, 20, { label: 'chassis', collisionFilter: { group }, chamfer: { radius: 10 }, density: 0.001, render: { sprite: { texture: CAR_DEFINITIONS.rally.body_sprite, xScale: 1, yScale: 1.25 } } });
-                const driverHead = Bodies.circle(x - 20, y - 10, 15, { collisionFilter: { group }, density: 0.0001, render: { visible: false } });
-                const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><circle cx='25' cy='25' r='25' fill='%232c3e50'/><circle cx='25' cy='25' r='15' fill='none' stroke='%23bdc3c7' stroke-width='3'/><circle cx='25' cy='25' r='10' fill='%2334495e'/></svg>", xScale: wheelRadius/25, yScale: wheelRadius/25 }};
-                const wheelA = Bodies.circle(x - 55, y + 20, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.01, render: wheelRender });
-                const wheelB = Bodies.circle(x + 55, y + 20, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.01, render: wheelRender });
-                const carComposite = Composite.create({ label: 'Car' });
-                Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]);
-                Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } }));
-                const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -55, y: 15 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.1, render: { visible: false } });
-                const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 55, y: 15 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.1, render: { visible: false } });
-                Composite.add(carComposite, [axleA, axleB]);
-                return { composite: carComposite, chassis, wheelA, wheelB, driverHead };
-            }
-
-            function createMonsterTruck(x, y) {
-                const group = Body.nextGroup(true);
-                const upgrades = CAR_DEFINITIONS.truck.upgrades;
-                const wheelFriction = upgrades.tires.values[upgrades.tires.level];
-                const wheelRadius = 35;
-                const chassis = Bodies.rectangle(x, y, 150, 40, { label: 'chassis', collisionFilter: { group }, density: 0.002, render: { sprite: { texture: CAR_DEFINITIONS.truck.body_sprite, xScale: 1, yScale: 1 } } });
-                const driverHead = Bodies.circle(x - 20, y - 25, 15, { collisionFilter: { group }, density: 0.0001, render: { visible: false } });
-                const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><circle cx='40' cy='40' r='40' fill='%232c3e50'/><path d='M20 40 L60 40 M40 20 L40 60' stroke='%237f8c8d' stroke-width='8'/><circle cx='40' cy='40' r='20' fill='%2334495e'/></svg>", xScale: wheelRadius/40, yScale: wheelRadius/40 }};
-                const wheelA = Bodies.circle(x - 65, y + 35, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.02, render: wheelRender });
-                const wheelB = Bodies.circle(x + 65, y + 35, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.02, render: wheelRender });
-                const carComposite = Composite.create({ label: 'Car' });
-                Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]);
-                Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } }));
-                const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -65, y: 25 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.2, render: { visible: false } });
-                const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 65, y: 25 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.2, render: { visible: false } });
-                Composite.add(carComposite, [axleA, axleB]);
-                return { composite: carComposite, chassis, wheelA, wheelB, driverHead };
-            }
-
-            function createSportsCar(x, y) {
-                const group = Body.nextGroup(true);
-                const upgrades = CAR_DEFINITIONS.sports.upgrades;
-                const wheelFriction = upgrades.tires.values[upgrades.tires.level];
-                const wheelRadius = 18;
-                const chassis = Bodies.rectangle(x, y, 160, 15, { label: 'chassis', collisionFilter: { group }, density: 0.0008, render: { sprite: { texture: CAR_DEFINITIONS.sports.body_sprite, xScale: 1, yScale: 1.1 } } });
-                const driverHead = Bodies.circle(x + 10, y - 10, 12, { collisionFilter: { group }, density: 0.0001, render: { visible: false } });
-                const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><circle cx='25' cy='25' r='25' fill='%231e272e'/><g stroke='%23ecf0f1' stroke-width='2'><path d='M25 5 L25 45 M5 25 L45 25'/></g><circle cx='25' cy='25' r='10' fill='%23dcdde1'/></svg>", xScale: wheelRadius/25, yScale: wheelRadius/25 }};
-                const wheelA = Bodies.circle(x - 60, y + 18, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.008, render: wheelRender });
-                const wheelB = Bodies.circle(x + 60, y + 18, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.008, render: wheelRender });
-                const carComposite = Composite.create({ label: 'Car' });
-                Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]);
-                Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } }));
-                const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -60, y: 10 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.05, render: { visible: false } });
-                const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 60, y: 10 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.05, render: { visible: false } });
-                Composite.add(carComposite, [axleA, axleB]);
-                return { composite: carComposite, chassis, wheelA, wheelB, driverHead };
-            }
+            function createRallyCar(x, y) { const group = Body.nextGroup(true); const upgrades = CAR_DEFINITIONS.rally.upgrades; const wheelFriction = upgrades.tires.values[upgrades.tires.level]; const wheelRadius = 18; const chassis = Bodies.rectangle(x, y, 140, 20, { label: 'chassis', collisionFilter: { group }, chamfer: { radius: 10 }, density: 0.001, render: { sprite: { texture: CAR_DEFINITIONS.rally.body_sprite, xScale: 1, yScale: 1.25 } } }); const driverHead = Bodies.circle(x - 20, y - 10, 15, { collisionFilter: { group }, density: 0.0001, render: { visible: false } }); const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><circle cx='25' cy='25' r='25' fill='%232c3e50'/><circle cx='25' cy='25' r='15' fill='none' stroke='%23bdc3c7' stroke-width='3'/><circle cx='25' cy='25' r='10' fill='%2334495e'/></svg>", xScale: wheelRadius/25, yScale: wheelRadius/25 }}; const wheelA = Bodies.circle(x - 55, y + 20, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.01, render: wheelRender }); const wheelB = Bodies.circle(x + 55, y + 20, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.01, render: wheelRender }); const carComposite = Composite.create({ label: 'Car' }); Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]); Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } })); const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -55, y: 15 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.1, render: { visible: false } }); const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 55, y: 15 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.1, render: { visible: false } }); Composite.add(carComposite, [axleA, axleB]); return { composite: carComposite, chassis, wheelA, wheelB, driverHead }; }
+            function createMonsterTruck(x, y) { const group = Body.nextGroup(true); const upgrades = CAR_DEFINITIONS.truck.upgrades; const wheelFriction = upgrades.tires.values[upgrades.tires.level]; const wheelRadius = 35; const chassis = Bodies.rectangle(x, y, 150, 40, { label: 'chassis', collisionFilter: { group }, density: 0.002, render: { sprite: { texture: CAR_DEFINITIONS.truck.body_sprite, xScale: 1, yScale: 1 } } }); const driverHead = Bodies.circle(x - 20, y - 25, 15, { collisionFilter: { group }, density: 0.0001, render: { visible: false } }); const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><circle cx='40' cy='40' r='40' fill='%232c3e50'/><path d='M20 40 L60 40 M40 20 L40 60' stroke='%237f8c8d' stroke-width='8'/><circle cx='40' cy='40' r='20' fill='%2334495e'/></svg>", xScale: wheelRadius/40, yScale: wheelRadius/40 }}; const wheelA = Bodies.circle(x - 65, y + 35, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.02, render: wheelRender }); const wheelB = Bodies.circle(x + 65, y + 35, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.02, render: wheelRender }); const carComposite = Composite.create({ label: 'Car' }); Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]); Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } })); const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -65, y: 25 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.2, render: { visible: false } }); const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 65, y: 25 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.2, render: { visible: false } }); Composite.add(carComposite, [axleA, axleB]); return { composite: carComposite, chassis, wheelA, wheelB, driverHead }; }
+            function createSportsCar(x, y) { const group = Body.nextGroup(true); const upgrades = CAR_DEFINITIONS.sports.upgrades; const wheelFriction = upgrades.tires.values[upgrades.tires.level]; const wheelRadius = 18; const chassis = Bodies.rectangle(x, y, 160, 15, { label: 'chassis', collisionFilter: { group }, density: 0.0008, render: { sprite: { texture: CAR_DEFINITIONS.sports.body_sprite, xScale: 1, yScale: 1.1 } } }); const driverHead = Bodies.circle(x + 10, y - 10, 12, { collisionFilter: { group }, density: 0.0001, render: { visible: false } }); const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><circle cx='25' cy='25' r='25' fill='%231e272e'/><g stroke='%23ecf0f1' stroke-width='2'><path d='M25 5 L25 45 M5 25 L45 25'/></g><circle cx='25' cy='25' r='10' fill='%23dcdde1'/></svg>", xScale: wheelRadius/25, yScale: wheelRadius/25 }}; const wheelA = Bodies.circle(x - 60, y + 18, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.008, render: wheelRender }); const wheelB = Bodies.circle(x + 60, y + 18, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.008, render: wheelRender }); const carComposite = Composite.create({ label: 'Car' }); Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]); Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } })); const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -60, y: 10 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.05, render: { visible: false } }); const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 60, y: 10 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.05, render: { visible: false } }); Composite.add(carComposite, [axleA, axleB]); return { composite: carComposite, chassis, wheelA, wheelB, driverHead }; }
+            function createDuneBuggy(x, y) { const group = Body.nextGroup(true); const upgrades = CAR_DEFINITIONS.buggy.upgrades; const wheelFriction = upgrades.tires.values[upgrades.tires.level]; const wheelRadius = 20; const chassis = Bodies.rectangle(x, y, 140, 20, { label: 'chassis', collisionFilter: { group }, density: 0.0005, render: { sprite: { texture: CAR_DEFINITIONS.buggy.body_sprite, xScale: 1, yScale: 1 } } }); const driverHead = Bodies.circle(x, y-15, 15, { collisionFilter: { group }, density: 0.0001, render: { visible: false } }); const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><circle cx='25' cy='25' r='25' fill='%2334495e'/><circle cx='25' cy='25' r='18' stroke='%2395a5a6' stroke-width='5' fill='none'/></svg>", xScale: wheelRadius/25, yScale: wheelRadius/25 }}; const wheelA = Bodies.circle(x - 65, y + 25, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.005, render: wheelRender }); const wheelB = Bodies.circle(x + 65, y + 25, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.005, render: wheelRender }); const carComposite = Composite.create({ label: 'Car' }); Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]); Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } })); const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -65, y: 10 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.01, render: { visible: false } }); const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 65, y: 10 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.01, render: { visible: false } }); Composite.add(carComposite, [axleA, axleB]); return { composite: carComposite, chassis, wheelA, wheelB, driverHead }; }
+            function createSuperJeep(x, y) { const group = Body.nextGroup(true); const upgrades = CAR_DEFINITIONS.jeep.upgrades; const wheelFriction = upgrades.tires.values[upgrades.tires.level]; const wheelRadius = 25; const chassis = Bodies.rectangle(x, y, 160, 40, { label: 'chassis', collisionFilter: { group }, density: 0.003, render: { sprite: { texture: CAR_DEFINITIONS.jeep.body_sprite, xScale: 1, yScale: 1 } } }); const driverHead = Bodies.circle(x-10, y-20, 15, { collisionFilter: { group }, density: 0.0001, render: { visible: false } }); const wheelRender = { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><circle cx='30' cy='30' r='30' fill='%233d3d3d'/><circle cx='30' cy='30' r='10' fill='white'/><path d='M30 0 v60 M0 30 h60' stroke='white' stroke-width='4'/></svg>", xScale: wheelRadius/30, yScale: wheelRadius/30 }}; const wheelA = Bodies.circle(x - 70, y + 20, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.03, render: wheelRender }); const wheelB = Bodies.circle(x + 70, y + 20, wheelRadius, { collisionFilter: { group }, friction: wheelFriction, density: 0.03, render: wheelRender }); const carComposite = Composite.create({ label: 'Car' }); Composite.add(carComposite, [chassis, wheelA, wheelB, driverHead]); Composite.add(carComposite, Constraint.create({ bodyA: chassis, bodyB: driverHead, stiffness: 1, length: 0, render: { visible: false } })); const axleA = Constraint.create({ bodyA: chassis, bodyB: wheelA, pointA: { x: -70, y: 20 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.3, render: { visible: false } }); const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelB, pointA: { x: 70, y: 20 }, stiffness: upgrades.suspension.values[upgrades.suspension.level], damping: 0.3, render: { visible: false } }); Composite.add(carComposite, [axleA, axleB]); return { composite: carComposite, chassis, wheelA, wheelB, driverHead }; }
 
             // --- TERRAIN & BIOME MANAGEMENT ---
-            function createTerrainSegment(startX, startY, roughness) {
-                // Biased the Y-change to prevent slopes from becoming inverted.
+            function createTerrainSegment(startX, startY, roughness, friction) {
                 const yChange = (Math.random() - 0.52) * TERRAIN_SETTINGS.segmentWidth * roughness;
                 const endX = startX + TERRAIN_SETTINGS.segmentWidth;
                 const endY = startY + yChange;
-
                 const vertices = [ { x: startX, y: startY }, { x: endX, y: endY }, { x: endX, y: window.innerHeight + 200 }, { x: startX, y: window.innerHeight + 200 } ];
                 const gradient = render.context.createLinearGradient(startX, startY - 100, startX, startY + 100);
                 gradient.addColorStop(0, currentBiome.terrainColors.top);
                 gradient.addColorStop(0.5, currentBiome.terrainColors.mid);
                 gradient.addColorStop(1, currentBiome.terrainColors.bot);
-                const body = Bodies.fromVertices( (startX + endX) / 2, (startY + endY + window.innerHeight * 2 + 400) / 4, [vertices], { isStatic: true, friction: 1.0, render: { fillStyle: gradient, strokeStyle: currentBiome.terrainColors.bot, lineWidth: 8 } });
+                const body = Bodies.fromVertices( (startX + endX) / 2, (startY + endY + window.innerHeight * 2 + 400) / 4, [vertices], { isStatic: true, friction, render: { fillStyle: gradient, strokeStyle: currentBiome.terrainColors.bot, lineWidth: 8 } });
                 return { body, startPoint: { x: startX, y: startY }, endPoint: { x: endX, y: endY } };
             }
 
@@ -732,11 +866,14 @@
                 for (let i = 0; i < TERRAIN_SETTINGS.initialSegments; i++) {
                     const rampUp = (i < 15) ? (i / 15) : 1;
                     const currentRoughness = currentBiome.roughness * rampUp;
-                    const segment = createTerrainSegment(currentX, currentY, currentRoughness);
+                    const segment = createTerrainSegment(currentX, currentY, currentRoughness, currentBiome.friction);
                     groundSegments.push(segment);
                     World.add(world, segment.body);
-                    if (i > 15 && Math.random() < 0.1) addFuelCan(segment.endPoint.x, segment.endPoint.y - 80);
+                    if (i > 15 && Math.random() < 0.05) addFuelCan(segment.endPoint.x, segment.endPoint.y - 80);
                     if (i > 15 && Math.random() < 0.2) addCoin(segment.endPoint.x, segment.endPoint.y - 60);
+                    if (i > 20 && Math.random() < 0.05) addMine(segment.endPoint.x, segment.endPoint.y + 15);
+                    if (i > 25 && Math.random() < 0.04) addHealthPack(segment.endPoint.x, segment.endPoint.y - 80);
+                    if (i > 25 && Math.random() < 0.04) addJetpackCan(segment.endPoint.x, segment.endPoint.y - 80);
                     currentX = segment.endPoint.x;
                     currentY = segment.endPoint.y;
                 }
@@ -744,16 +881,17 @@
 
             function updateTerrain() {
                 const carX = car.chassis.position.x;
-                // Progressive difficulty
                 const difficultyFactor = 1 + (carX / 60000);
                 let lastSegment = groundSegments[groundSegments.length - 1];
-
                 while (carX > lastSegment.endPoint.x - TERRAIN_SETTINGS.lookahead * TERRAIN_SETTINGS.segmentWidth) {
-                    const newSegment = createTerrainSegment(lastSegment.endPoint.x, lastSegment.endPoint.y, currentBiome.roughness * difficultyFactor);
+                    const newSegment = createTerrainSegment(lastSegment.endPoint.x, lastSegment.endPoint.y, currentBiome.roughness * difficultyFactor, currentBiome.friction);
                     groundSegments.push(newSegment);
                     World.add(world, newSegment.body);
-                    if (Math.random() < 0.1) addFuelCan(newSegment.endPoint.x, newSegment.endPoint.y - 80);
+                    if (Math.random() < 0.05) addFuelCan(newSegment.endPoint.x, newSegment.endPoint.y - 80);
                     if (Math.random() < 0.2) addCoin(newSegment.endPoint.x, newSegment.endPoint.y - 60);
+                    if (Math.random() < 0.05 * difficultyFactor) addMine(newSegment.endPoint.x, newSegment.endPoint.y + 15);
+                    if (Math.random() < 0.04) addHealthPack(newSegment.endPoint.x, newSegment.endPoint.y - 80);
+                    if (Math.random() < 0.04) addJetpackCan(newSegment.endPoint.x, newSegment.endPoint.y - 80);
                     lastSegment = newSegment; 
                 }
                 while (carX > groundSegments[0].endPoint.x + TERRAIN_SETTINGS.segmentWidth * 15 && groundSegments.length > TERRAIN_SETTINGS.initialSegments) {
@@ -763,59 +901,46 @@
             
             function addFuelCan(x, y) { const can = Bodies.rectangle(x, y, 60, 80, { isStatic: true, isSensor: true, label: 'fuelCan', render: { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 50'><defs><linearGradient id='grad' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23e55039'/><stop offset='100%' stop-color='%23c0392b'/></linearGradient></defs><path d='M5 5 H35 L40 10 V45 L35 50 H5 L0 45 V10 Z' fill='url(%23grad)'/><path d='M10 0 H20 V5 H10 Z' fill='%2334495e'/><path d='M25 15 H35 V20 H25 Z' fill='rgba(255,255,255,0.3)'/></svg>", xScale: 0.75, yScale: 0.8 } } }); fuelCans.push(can); World.add(world, can); }
             function addCoin(x, y) { const coin = Bodies.circle(x, y, 20, { isStatic: true, isSensor: true, label: 'coin', render: { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><radialGradient id='grad' cx='50%' cy='50%' r='50%' fx='50%' fy='50%'><stop offset='0%' stop-color='%23f1c40f' stop-opacity='1' /><stop offset='100%' stop-color='%23f39c12' stop-opacity='1' /></radialGradient></defs><circle cx='20' cy='20' r='20' fill='url(%23grad)'/><circle cx='20' cy='20' r='18' fill='none' stroke='%23e67e22' stroke-width='2'/><text x='50%' y='50%' dy='.3em' text-anchor='middle' font-size='20' font-weight='bold' fill='%23d35400'>$</text></svg>", xScale: 1, yScale: 1 } } }); coins.push(coin); World.add(world, coin); }
+            function addMine(x, y) { const mine = Bodies.circle(x, y, 25, { isStatic: true, isSensor: true, label: 'mine', render: { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-10 -10 60 60'><defs><radialGradient id='gradMine' cx='50%' cy='50%' r='50%' fx='25%' fy='25%'><stop offset='0%' stop-color='%23636e72'/><stop offset='100%' stop-color='%232d3436'/></radialGradient></defs><circle cx='20' cy='20' r='20' fill='url(%23gradMine)'/><path d='M20 0 L20 8 M0 20 L8 20 M20 40 L20 32 M40 20 L32 20 M5 5 L12 12 M35 5 L28 12 M5 35 L12 28 M35 35 L28 28' stroke='%23d63031' stroke-width='4' stroke-linecap='round'/></svg>", xScale: 1, yScale: 1 } } }); mines.push(mine); World.add(world, mine); }
+            function addHealthPack(x, y) { const pack = Bodies.rectangle(x, y, 70, 70, { isStatic: true, isSensor: true, label: 'healthPack', render: { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><path fill='%23e74c3c' d='M25 42.5 C25 42.5 5 27.5 5 17.5 A 10 10 0 0 1 25 10 A 10 10 0 0 1 45 17.5 C 45 27.5 25 42.5 25 42.5z'/></svg>", xScale: 1, yScale: 1 } } }); healthPacks.push(pack); World.add(world, pack); }
+            function addJetpackCan(x, y) { const can = Bodies.rectangle(x, y, 60, 80, { isStatic: true, isSensor: true, label: 'jetpackCan', render: { sprite: { texture: "data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 80'><g transform='rotate(45 25 40)'><rect x='10' y='10' width='30' height='60' rx='15' fill='%233498db'/><path d='M10 50 L40 50 L25 75 Z' fill='%23e67e22'/><circle cx='25' cy='25' r='8' fill='rgba(255,255,255,0.5)'/></g></svg>", xScale: 1, yScale: 1 } } }); jetpackCans.push(can); World.add(world, can); }
             
             function checkCollisions(pair) {
                 const carParts = [car.chassis, car.wheelA, car.wheelB];
                 const check = (bodyA, bodyB) => {
-                    if (bodyA.label === 'chassis' || bodyB.label === 'chassis') {
-                        checkGameOver(pair);
-                    }
-                    const isBodyACollectible = ['fuelCan', 'coin'].includes(bodyA.label);
-                    const isBodyBCollectible = ['fuelCan', 'coin'].includes(bodyB.label);
                     const isBodyACar = carParts.includes(bodyA);
                     const isBodyBCar = carParts.includes(bodyB);
-                    
-                    if (isBodyACar && isBodyBCollectible) {
-                        if (bodyB.label === 'fuelCan') collectFuel(bodyB);
-                        if (bodyB.label === 'coin') collectCoin(bodyB);
-                    } else if (isBodyBCar && isBodyACollectible) {
-                        if (bodyA.label === 'fuelCan') collectFuel(bodyA);
-                        if (bodyA.label === 'coin') collectCoin(bodyA);
-                    }
+                    if (isBodyACar) handleCollection(bodyB);
+                    else if (isBodyBCar) handleCollection(bodyA);
                 };
                 check(pair.bodyA, pair.bodyB);
             }
 
-            function collectFuel(can) { if (!fuelCans.includes(can)) return; fuel = Math.min(CAR_DEFINITIONS[selectedCarType].upgrades.fuel.values[CAR_DEFINITIONS[selectedCarType].upgrades.fuel.level], fuel + 30); World.remove(world, can); fuelCans = fuelCans.filter(f => f !== can); playCoinSound(); }
-            function collectCoin(coin) { if (!coins.includes(coin)) return; coinsCollected++; World.remove(world, coin); coins = coins.filter(c => c !== coin); playCoinSound(); }
+            function handleCollection(item) {
+                if (item.label === 'fuelCan' && fuelCans.includes(item)) { fuel = Math.min(CAR_DEFINITIONS[selectedCarType].upgrades.fuel.values[CAR_DEFINITIONS[selectedCarType].upgrades.fuel.level], fuel + 40); World.remove(world, item); fuelCans = fuelCans.filter(f => f !== item); playCoinSound(); }
+                if (item.label === 'coin' && coins.includes(item)) { coinsCollected++; challengeProgress.coins++; World.remove(world, item); coins = coins.filter(c => c !== item); playCoinSound(); }
+                if (item.label === 'healthPack' && healthPacks.includes(item)) { health = Math.min(100, health + 50); challengeProgress.healthPacks++; World.remove(world, item); healthPacks = healthPacks.filter(h => h !== item); playHealthSound(); }
+                if (item.label === 'jetpackCan' && jetpackCans.includes(item)) { jetpackFuel = Math.min(100, jetpackFuel + 50); World.remove(world, item); jetpackCans = jetpackCans.filter(j => j !== item); playCoinSound(); }
+                if (item.label === 'mine' && mines.includes(item)) { World.remove(world, item); mines = mines.filter(m => m !== item); handleMineCollision(item.position); }
+            }
+
+            function handleMineCollision(position) {
+                createExplosion(position);
+                playExplosionSound();
+                health -= 34;
+                challengeProgress.mines++;
+                triggerScreenShake(30);
+            }
 
             // --- DYNAMIC SKY ---
             function updateSky() {
                 if (!currentBiome || !engine || !engine.timing) {
                     const biomeToDisplay = BIOMES[selectedBiome];
-                    if (biomeToDisplay) {
-                        const { dayTop, dayBot } = biomeToDisplay.skyColors;
-                        skyGradient.style.background = `linear-gradient(to bottom, rgb(${dayTop.r}, ${dayTop.g}, ${dayTop.b}), rgb(${dayBot.r}, ${dayBot.g}, ${dayBot.b}))`;
-                    }
-                    return;
+                    if (biomeToDisplay) { const { dayTop, dayBot } = biomeToDisplay.skyColors; skyGradient.style.background = `linear-gradient(to bottom, rgb(${dayTop.r}, ${dayTop.g}, ${dayTop.b}), rgb(${dayBot.r}, ${dayBot.g}, ${dayBot.b}))`; } return;
                 }
-
-                const cycleSpeed = 0.00005;
-                const time = engine.timing.timestamp * cycleSpeed;
-                const sinTime = Math.sin(time);
-                const { dayTop, dayBot, nightTop, nightBot } = currentBiome.skyColors;
-                const sunsetTop = {r: 255, g: 165, b: 0}, sunsetBot = {r: 255, g: 69, b: 0};
-                let t = (sinTime + 1) / 2;
-                let rT, gT, bT, rB, gB, bB;
-
-                if ((t > 0.95 || t < 0.05) && currentBiome.id !== 'moon') {
-                    let sunsetT = t > 0.5 ? 1 - ((t - 0.95) / 0.05) : t / 0.05;
-                    rT = dayTop.r * (1-sunsetT) + sunsetTop.r * sunsetT; gT = dayTop.g * (1-sunsetT) + sunsetTop.g * sunsetT; bT = dayTop.b * (1-sunsetT) + sunsetTop.b * sunsetT;
-                    rB = dayBot.r * (1-sunsetT) + sunsetBot.r * sunsetT; gB = dayBot.g * (1-sunsetT) + sunsetBot.g * sunsetT; bB = dayBot.b * (1-sunsetT) + sunsetBot.b * sunsetT;
-                } else {
-                    rT = dayTop.r * t + nightTop.r * (1 - t); gT = dayTop.g * t + nightTop.g * (1 - t); bT = dayTop.b * t + nightTop.b * (1 - t);
-                    rB = dayBot.r * t + nightBot.r * (1 - t); gB = dayBot.g * t + nightBot.g * (1 - t); bB = dayBot.b * t + nightBot.b * (1 - t);
-                }
+                const cycleSpeed = 0.00005; const time = engine.timing.timestamp * cycleSpeed; const sinTime = Math.sin(time); const { dayTop, dayBot, nightTop, nightBot } = currentBiome.skyColors; const sunsetTop = {r: 255, g: 165, b: 0}, sunsetBot = {r: 255, g: 69, b: 0}; let t = (sinTime + 1) / 2; let rT, gT, bT, rB, gB, bB;
+                if ((t > 0.95 || t < 0.05) && currentBiome.id !== 'moon') { let sunsetT = t > 0.5 ? 1 - ((t - 0.95) / 0.05) : t / 0.05; rT = dayTop.r * (1-sunsetT) + sunsetTop.r * sunsetT; gT = dayTop.g * (1-sunsetT) + sunsetTop.g * sunsetT; bT = dayTop.b * (1-sunsetT) + sunsetTop.b * sunsetT; rB = dayBot.r * (1-sunsetT) + sunsetBot.r * sunsetT; gB = dayBot.g * (1-sunsetT) + sunsetBot.g * sunsetT; bB = dayBot.b * (1-sunsetT) + sunsetBot.b * sunsetT;
+                } else { rT = dayTop.r * t + nightTop.r * (1 - t); gT = dayTop.g * t + nightTop.g * (1 - t); bT = dayTop.b * t + nightTop.b * (1 - t); rB = dayBot.r * t + nightBot.r * (1 - t); gB = dayBot.g * t + nightBot.g * (1 - t); bB = dayBot.b * t + nightBot.b * (1 - t); }
                 skyGradient.style.background = `linear-gradient(to bottom, rgb(${rT}, ${gT}, ${bT}), rgb(${rB}, ${gB}, ${bB}))`;
             }
 
@@ -866,72 +991,66 @@
                 const upgrades = carDef.upgrades;
                 let engineTorque = upgrades.engine.values[upgrades.engine.level];
 
-                const isAccelerating = keys['ArrowRight'] || keys['d'] || isGasPressed;
-                const isBraking = keys['ArrowLeft'] || keys['a'] || isBrakePressed;
-                const usingJetpack = (keys[' '] || keys['Space']) && jetpackFuel > 0;
+                const isAccelerating = (keys['ArrowRight'] || keys['d'] || isGasPressed);
+                const isBraking = (keys['ArrowLeft'] || keys['a'] || isBrakePressed);
+                const usingJetpack = (keys[' '] || keys['Space'] || isJetpackPressed) && jetpackFuel > 0;
+                
+                const onGround = Query.collides(car.wheelA, groundSegments.map(s => s.body)).length > 0 || Query.collides(car.wheelB, groundSegments.map(s => s.body)).length > 0;
                 
                 const wasOnGround = airTime === 0;
-                const onGround = Query.collides(car.wheelA, groundSegments.map(s => s.body)).length > 0 || Query.collides(car.wheelB, groundSegments.map(s => s.body)).length > 0;
                 justLanded = !wasOnGround && onGround;
-                
-                if (justLanded) landingVelocity = car.chassis.velocity.y;
-                
-                if (usingJetpack) {
-                    // FIX: Jetpack force is now correctly balanced and provides horizontal thrust.
-                    const angle = car.chassis.angle;
-                    const verticalForce = -0.045 * car.chassis.mass * world.gravity.y; // Balanced lift
-                    const horizontalForce = 0.00001 * car.chassis.mass; // Forward push
-                    
-                    const force = {
-                        x: Math.cos(angle) * horizontalForce - Math.sin(angle) * verticalForce,
-                        y: Math.sin(angle) * horizontalForce + Math.cos(angle) * verticalForce
-                    };
+                 if (justLanded) {
+                    landingVelocity = car.chassis.velocity.y;
+                    processStunts();
+                }
 
+                if (usingJetpack && !isFlipped) {
+                    const angle = car.chassis.angle;
+                    const verticalForce = -0.02 * car.chassis.mass * world.gravity.y;
+                    const horizontalForce = 0.005 * car.chassis.mass; 
+                    const force = { x: Math.cos(angle) * horizontalForce - Math.sin(angle) * verticalForce, y: Math.sin(angle) * horizontalForce + Math.cos(angle) * verticalForce };
                     Body.applyForce(car.chassis, car.chassis.position, force);
                     jetpackFuel = Math.max(0, jetpackFuel - 0.5);
-                } else {
-                    jetpackFuel = Math.min(100, jetpackFuel + 0.1);
                 }
-                setJetpackSound(usingJetpack);
-
-                if (onGround) {
-                    processStunts();
+                setJetpackSound(usingJetpack && !isFlipped);
+                
+                handleFlipState();
+                
+                // Control Logic
+                let torque = 0;
+                if (!onGround || isFlipped) {
+                    if (isAccelerating) torque += 0.05;
+                    if (isBraking) torque -= 0.05;
+                    car.chassis.torque = torque;
+                }
+                
+                if (onGround && !isFlipped) {
                     if (isAccelerating) { Body.setAngularVelocity(car.wheelA, car.wheelA.angularVelocity + engineTorque); Body.setAngularVelocity(car.wheelB, car.wheelB.angularVelocity + engineTorque); fuel -= 0.03; }
                     if (isBraking) { Body.setAngularVelocity(car.wheelA, car.wheelA.angularVelocity - engineTorque * 0.5); Body.setAngularVelocity(car.wheelB, car.wheelB.angularVelocity - engineTorque * 0.5); }
                 } else {
-                    airTime += engine.timing.deltaTime;
-                    const deltaAngle = car.chassis.angle - lastAngle;
-                    totalRotation += deltaAngle;
-                    
-                    let targetAngle = car.chassis.angle % (Math.PI * 2);
-                    if (targetAngle > Math.PI) targetAngle -= Math.PI * 2;
-                    if (targetAngle < -Math.PI) targetAngle += Math.PI * 2;
-                    car.chassis.torque = -targetAngle * 0.2;
-
-                    if (isAccelerating) car.chassis.torque += 0.05;
-                    if (isBraking) car.chassis.torque -= 0.05;
+                    if (!isFlipped) {
+                        airTime += engine.timing.deltaTime;
+                        const deltaAngle = car.chassis.angle - lastAngle;
+                        totalRotation += deltaAngle;
+                    }
                 }
                 
                 lastAngle = car.chassis.angle;
 
-                if(audioInitialized) { const targetGain = (isAccelerating && onGround) ? 0.35 : 0; const targetFreq = (isAccelerating && onGround) ? (40 + Math.min(60, 30 * (Math.abs(car.chassis.velocity.x) / 20))) : 40; engineSound.gainNode.gain.setTargetAtTime(targetGain, audioContext.currentTime, 0.1); engineSound.frequency.setTargetAtTime(targetFreq, audioContext.currentTime, 0.1); }
+                if(audioInitialized) { const targetGain = (isAccelerating && onGround && !isFlipped) ? 0.35 : 0; const targetFreq = (isAccelerating && onGround && !isFlipped) ? (40 + Math.min(60, 30 * (Math.abs(car.chassis.velocity.x) / 20))) : 40; engineSound.gainNode.gain.setTargetAtTime(targetGain, audioContext.currentTime, 0.1); engineSound.frequency.setTargetAtTime(targetFreq, audioContext.currentTime, 0.1); }
 
-                fuel -= 0.005;
+                if (!isFlipped) fuel -= 0.005; // Don't consume fuel while flipped
                 maxTravel = Math.max(maxTravel, car.chassis.position.x);
                 score = Math.max(0, Math.floor(maxTravel / 100) - 1);
                 scoreElement.textContent = `Score: ${score}`;
                 coinElement.textContent = coinsCollected;
+                healthBarElement.style.width = `${Math.max(0, health)}%`;
                 fuelBarElement.style.width = `${Math.max(0, (fuel / upgrades.fuel.values[upgrades.fuel.level]) * 100)}%`;
                 jetpackBarElement.style.width = `${jetpackFuel}%`;
 
                 Render.lookAt(render, car.chassis, { x: 400, y: 300 });
                 const cameraX = car.chassis.position.x - window.innerWidth / 4;
-                document.querySelectorAll('.parallax-bg').forEach(bg => {
-                    let speed = 0.1;
-                    if (bg.id.includes('near')) speed = 0.3;
-                    if (bg.id.includes('fg')) speed = 0.6;
-                    bg.style.transform = `translateX(${-cameraX * speed}px)`;
-                });
+                document.querySelectorAll('.parallax-bg').forEach(bg => { let speed = 0.1; if (bg.id.includes('near')) speed = 0.3; if (bg.id.includes('fg')) speed = 0.6; bg.style.transform = `translateX(${-cameraX * speed}px)`; });
                 
                 updateTerrain();
                 updateSky();
@@ -939,109 +1058,76 @@
             }
             
             // --- Effects, Stunts, and Game Over ---
-            function renderEffects() {
-                if (isGameOver || !car) return;
-                // Render jetpack flame
-                if ((keys[' '] || keys['Space']) && jetpackFuel > 0) {
-                    const ctx = render.context;
-                    const chassis = car.chassis;
-                    // FIX: Correctly calculate flame position from the chassis center and rotation
-                    const localBackOffset = Vector.create(CAR_DEFINITIONS[selectedCarType].jetpackOffset, 5); // Use the defined offset
-                    const rotatedOffset = Vector.rotate(localBackOffset, chassis.angle);
-                    const flamePos = Vector.add(chassis.position, rotatedOffset);
-                    
-                    for (let i = 0; i < 5; i++) {
-                        // FIX: Flame velocity should be relative to the car's angle
-                        const flameVel = Vector.rotate({ x: -Math.random() * 8 - 5, y: (Math.random() - 0.5) * 5 }, chassis.angle);
-                        flameParticles.push({
-                            pos: Vector.clone(flamePos),
-                            vel: flameVel,
-                            radius: Math.random() * 10 + 5,
-                            life: 20
-                        });
-                    }
+            function createExplosion(position) {
+                 for (let i = 0; i < 50; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 10 + 2;
+                    explosionParticles.push({
+                        pos: Vector.clone(position),
+                        vel: {x: Math.cos(angle) * speed, y: Math.sin(angle) * speed},
+                        radius: Math.random() * 8 + 4,
+                        life: 60,
+                        color: [ {r:255,g:212,b:59}, {r:255,g:159,b:67}, {r:214,g:48,b:49} ][Math.floor(Math.random()*3)]
+                    });
                 }
-                
-                // Update and draw particles
-                const ctx = render.context;
-                for (let i = flameParticles.length - 1; i >= 0; i--) {
-                    const p = flameParticles[i];
-                    p.pos.x += p.vel.x;
-                    p.pos.y += p.vel.y;
-                    p.life -= 1;
-                    p.radius *= 0.95;
-                    
-                    if (p.life <= 0) {
-                        flameParticles.splice(i, 1);
-                        continue;
-                    }
-                    
-                    ctx.beginPath();
-                    const alpha = p.life / 20;
-                    const grad = ctx.createRadialGradient(p.pos.x, p.pos.y, 0, p.pos.x, p.pos.y, p.radius);
-                    grad.addColorStop(0, `rgba(255, 200, 50, ${alpha})`);
-                    grad.addColorStop(0.8, `rgba(255, 100, 0, ${alpha * 0.5})`);
-                    grad.addColorStop(1, `rgba(200, 0, 0, 0)`);
-                    ctx.fillStyle = grad;
-                    ctx.arc(p.pos.x, p.pos.y, p.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+                triggerScreenShake(25);
             }
 
             function processStunts() {
-                if (justLanded) {
-                    if (landingVelocity > 10) {
-                        triggerScreenShake(landingVelocity);
-                    }
-                    const flips = Math.floor(Math.abs(totalRotation) / (Math.PI * 1.9));
-                    if (flips > 0) {
-                        const bonus = flips * 5;
-                        coinsCollected += bonus;
-                        showStuntText(`FLIP! +${bonus}💰`);
-                    } else if (airTime > 500) { // Lowered threshold
-                        const bonus = Math.floor(airTime / 500);
-                        if (bonus > 0) {
-                           coinsCollected += bonus;
-                           showStuntText(`AIR TIME! +${bonus}💰`);
-                        }
-                    }
-                }
-                airTime = 0;
-                totalRotation = 0;
+                 if (landingVelocity > 10) { triggerScreenShake(landingVelocity); }
+                 const flips = Math.floor(Math.abs(totalRotation) / (Math.PI * 1.9));
+                 if (flips > 0) {
+                     const bonus = flips * 5;
+                     coinsCollected += bonus;
+                     challengeProgress.flips += flips;
+                     showStuntText(`FLIP x${flips}! +${bonus}💰`);
+                 } else if (airTime > 800) { 
+                     const bonus = Math.floor(airTime / 800);
+                     if (bonus > 0) {
+                         coinsCollected += bonus;
+                         showStuntText(`AIR TIME! +${bonus}💰`);
+                     }
+                 }
+                 airTime = 0; totalRotation = 0;
             }
 
             function triggerScreenShake(intensity) {
-                const shakeAmount = Math.min(15, intensity * 0.5);
+                const shakeAmount = Math.min(25, intensity);
                 gameWrapper.style.transform = `translate(${Math.random() * shakeAmount - shakeAmount / 2}px, ${Math.random() * shakeAmount - shakeAmount / 2}px)`;
-                setTimeout(() => {
-                    gameWrapper.style.transform = 'translate(0,0)';
-                }, 100);
+                setTimeout(() => { gameWrapper.style.transform = 'translate(0,0)'; }, 100);
             }
 
             function showStuntText(text) {
                 stuntTextElement.textContent = text;
                 stuntTextElement.classList.add('show');
-                setTimeout(() => {
-                    stuntTextElement.classList.remove('show');
-                }, 1000);
+                setTimeout(() => { stuntTextElement.classList.remove('show'); }, 1500);
             }
             
-            function checkGameOver(pair = null) {
-                 if (isGameOver) return;
-                 if (fuel <= 0) {
-                    gameOver();
-                    return;
+            function handleFlipState() {
+                const currentlyFlipped = Math.cos(car.chassis.angle) < -0.5;
+                const chassisOnGround = Query.collides(car.chassis, groundSegments.map(s => s.body)).length > 0;
+
+                if (currentlyFlipped && chassisOnGround && !isFlipped) {
+                    isFlipped = true;
+                    flipTimer = FLIP_RECOVERY_TIME;
+                    flipTimerContainer.style.display = 'block';
                 }
                 
-                const isFlipped = Math.abs(car.chassis.angle) > Math.PI / 2 + 0.2;
-                if (isFlipped && pair) {
-                    const isChassisCollision = pair.bodyA.label === 'chassis' || pair.bodyB.label === 'chassis';
-                    const isGroundCollision = !pair.bodyA.isSensor && !pair.bodyB.isSensor;
-                    if (isChassisCollision && isGroundCollision) {
-                         gameOver();
+                if (isFlipped) {
+                    if (!currentlyFlipped || !chassisOnGround) {
+                        isFlipped = false;
+                        flipTimerContainer.style.display = 'none';
+                    } else {
+                        flipTimer -= engine.timing.deltaTime;
+                        flipTimerBar.style.width = `${(flipTimer / FLIP_RECOVERY_TIME) * 100}%`;
+                        if (flipTimer <= 0) {
+                            health = 0; // End game
+                        }
                     }
                 }
             }
+            
+            function checkGameOver() { if (!isGameOver && (fuel <= 0 || health <= 0)) gameOver(); }
 
             function gameOver() {
                 if (isGameOver) return;
@@ -1049,6 +1135,13 @@
                 totalPlayerCoins += coinsCollected;
                 if(audioInitialized) { engineSound.gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.01); setJetpackSound(false); playGameOverSound(); }
                 Runner.stop(runner);
+                
+                updateChallengeProgress('distance', Math.floor(maxTravel), selectedBiome);
+                updateChallengeProgress('flips', challengeProgress.flips);
+                updateChallengeProgress('coins', challengeProgress.coins);
+                updateChallengeProgress('healthPacks', challengeProgress.healthPacks);
+                updateChallengeProgress('mines', challengeProgress.mines);
+
                 finalScoreElement.textContent = `Final Score: ${score}`;
                 finalCoinsElement.textContent = `Coins Collected: ${coinsCollected}`;
                 gameOverScreen.classList.add('active');
@@ -1056,11 +1149,8 @@
 
             function restartGame() {
                 if (engine) {
-                    World.clear(engine.world);
-                    Engine.clear(engine);
-                    Events.off(render, 'afterRender', renderEffects);
-                    Render.stop(render);
-                    Runner.stop(runner);
+                    World.clear(engine.world); Engine.clear(engine);
+                    Render.stop(render); Runner.stop(runner);
                     if (render.canvas) render.canvas.remove();
                     render.textures = {};
                 }
@@ -1077,26 +1167,28 @@
                 const setupButton = (button, setPressed) => { const press = (e) => { e.preventDefault(); setPressed(true); }; const release = (e) => { e.preventDefault(); setPressed(false); }; button.addEventListener('touchstart', press, { passive: false }); button.addEventListener('touchend', release); button.addEventListener('mousedown', press); button.addEventListener('mouseup', release); button.addEventListener('mouseleave', release); };
                 setupButton(gasButton, (pressed) => isGasPressed = pressed);
                 setupButton(brakeButton, (pressed) => isBrakePressed = pressed);
+                setupButton(jetpackButton, (pressed) => keys['Space'] = pressed); // Jetpack button mimics spacebar
                 Events.on(engine, 'collisionStart', (event) => { if (!isGameOver) event.pairs.forEach(pair => checkCollisions(pair)); });
             }
 
             carSelectionContainer.addEventListener('click', (e) => { const carOption = e.target.closest('.selection-option'); if (!carOption) return; document.querySelectorAll('#car-selection .selection-option').forEach(opt => opt.classList.remove('selected')); carOption.classList.add('selected'); selectedCarType = carOption.dataset.car; });
             mapSelectionContainer.addEventListener('click', (e) => { const mapOption = e.target.closest('.selection-option'); if (!mapOption) return; document.querySelectorAll('#map-selection .selection-option').forEach(opt => opt.classList.remove('selected')); mapOption.classList.add('selected'); selectedBiome = mapOption.dataset.biome; });
+            challengeListContainer.addEventListener('click', (e) => { if (e.target.classList.contains('claim-button')) { claimChallengeReward(parseInt(e.target.dataset.index)); }});
             startButton.addEventListener('click', () => { initAudio(); init(); });
             restartButton.addEventListener('click', restartGame);
-            
-            // Handle Upgrade screen navigation
             const openUpgrades = () => { upgradeScreen.classList.add('active'); showUpgradeScreen(); };
             const closeUpgrades = () => { upgradeScreen.classList.remove('active'); if (previousScreen === 'start') { startScreen.classList.add('active'); } else { gameOverScreen.classList.add('active'); } };
-            
             upgradesButton.addEventListener('click', () => { previousScreen = 'gameOver'; openUpgrades(); });
             mainUpgradesButton.addEventListener('click', () => { previousScreen = 'start'; openUpgrades(); });
             upgradeCloseButton.addEventListener('click', closeUpgrades);
             upgradeList.addEventListener('click', purchaseUpgrade);
-
+            
+            // Reloading the game on resize is the simplest robust way to handle
+            // the Matter.js canvas and physics world resizing in a single file.
             window.addEventListener('resize', restartGame);
             
             // Initial Setup
+            generateDailyChallenges();
             setupUI();
             updateSky();
         })();
