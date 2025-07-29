@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hill Climb Racer - Final Flip Fix</title>
+    <title>Hill Climb Racer - Timer Removed</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         /* Basic styles for the page */
@@ -220,29 +220,6 @@
             align-items: flex-end;
         }
         
-        /* Flip timer */
-        #flip-timer-container {
-            position: absolute;
-            top: 45%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: clamp(250px, 50vw, 350px);
-            height: 30px;
-            background-color: rgba(0,0,0,0.7);
-            border: 2px solid #e74c3c;
-            border-radius: 15px;
-            display: none; /* Hidden by default */
-            z-index: 1001;
-        }
-        #flip-timer-bar {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to right, #f1c40f, #e74c3c);
-            border-radius: 12px;
-            transition: width 0.1s linear;
-        }
-
-
         /* Bottom controls */
         .controls-ui {
             width: 100%;
@@ -299,7 +276,7 @@
             color: white;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* MODIFICATION: Aligns content to top */
+            justify-content: flex-start;
             align-items: center;
             text-align: center;
             z-index: 100;
@@ -308,7 +285,7 @@
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
             padding: 20px;
-            padding-top: 5vh; /* MODIFICATION: Adds padding from the top */
+            padding-top: 5vh;
             box-sizing: border-box;
             overflow-y: auto;
         }
@@ -505,7 +482,6 @@
         <div id="game-container"></div>
         <div id="stunt-text"></div>
         <div id="hills_fg" class="parallax-bg"></div>
-        <div id="flip-timer-container"><div id="flip-timer-bar"></div></div>
 
         <div id="ui-overlay" class="ui-overlay">
             <div class="top-ui">
@@ -610,8 +586,6 @@
             const skyGradient = document.getElementById('sky-gradient');
             const stuntTextElement = document.getElementById('stunt-text');
             const challengeListContainer = document.getElementById('challenge-list');
-            const flipTimerContainer = document.getElementById('flip-timer-container');
-            const flipTimerBar = document.getElementById('flip-timer-bar');
             
             // --- Game State & Settings ---
             let engine, render, runner, world, car;
@@ -627,10 +601,9 @@
             let currentBiome;
             let previousScreen = 'start';
             
-            // --- Stunt, Combo, Challenge, & Flip Mechanic State ---
+            // --- Stunt, Combo, Challenge State ---
             let airTime = 0, totalRotation = 0, lastAngle = 0, justLanded = false, landingVelocity = 0, heightAboveGround = 0;
-            let isFlipped = false, flipTimer = 0;
-            const FLIP_RECOVERY_TIME = 6000; // 6 seconds
+            let isFlipped = false;
             let dailyChallenges = [];
             let challengeProgress = {};
             let explosionParticles = [];
@@ -811,13 +784,12 @@
                 score = 0; maxTravel = 0; coinsCollected = 0;
                 airTime = 0; totalRotation = 0;
                 isGameOver = false; groundSegments = []; fuelCans = []; coins = []; mines = []; healthPacks = []; jetpackCans = [];
-                isFlipped = false; flipTimer = 0;
+                isFlipped = false;
                 challengeProgress = { flips: 0, coins: 0, healthPacks: 0, mines: 0 };
                 keys = {}; isGasPressed = false; isBrakePressed = false; isJetpackPressed = false;
                 startScreen.classList.remove('active');
                 gameOverScreen.classList.remove('active');
                 uiOverlay.style.display = 'flex';
-                flipTimerContainer.style.display = 'none';
                 engine = Engine.create();
                 world = engine.world;
                 world.gravity.y = currentBiome.gravity;
@@ -1000,7 +972,6 @@
                     const collisionsA = Query.ray(groundBodies, rayStartA, { x: rayStartA.x, y: rayStartA.y + 1000 });
                     const collisionsB = Query.ray(groundBodies, rayStartB, { x: rayStartB.x, y: rayStartB.y + 1000 });
                     let minDistance = Infinity;
-                    // --- SAFETY CHECK ---
                     if (collisionsA.length > 0 && collisionsA[0].point) minDistance = Math.min(minDistance, Vector.magnitude(Vector.sub(collisionsA[0].point, rayStartA)));
                     if (collisionsB.length > 0 && collisionsB[0].point) minDistance = Math.min(minDistance, Vector.magnitude(Vector.sub(collisionsB[0].point, rayStartB)));
                     if(minDistance !== Infinity) heightAboveGround = minDistance;
@@ -1122,27 +1093,9 @@
                 const chassisAngle = car.chassis.angle;
                 const upVector = { x: -Math.sin(chassisAngle), y: Math.cos(chassisAngle) };
                 const isUpsideDown = upVector.y < -0.5;
-                const chassisOnGround = Query.collides(car.chassis, groundSegments.map(s => s.body)).length > 0;
-                const isStuck = isUpsideDown && chassisOnGround;
-
-                if (isStuck && !isFlipped) {
-                    isFlipped = true;
-                    flipTimer = FLIP_RECOVERY_TIME;
-                    flipTimerContainer.style.display = 'block';
-                }
-
-                if (isFlipped) {
-                    if (isStuck) {
-                        flipTimer -= engine.timing.deltaTime;
-                        flipTimerBar.style.width = `${Math.max(0, (flipTimer / FLIP_RECOVERY_TIME) * 100)}%`;
-                        if (flipTimer <= 0) {
-                            health = 0;
-                        }
-                    } else {
-                        isFlipped = false;
-                        flipTimerContainer.style.display = 'none';
-                    }
-                }
+                const onGround = Query.collides(car.chassis, groundSegments.map(s => s.body)).length > 0;
+                
+                isFlipped = isUpsideDown && onGround;
             }
             
             function checkGameOver() { if (!isGameOver && (fuel <= 0 || health <= 0)) gameOver(); }
