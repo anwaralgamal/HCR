@@ -987,7 +987,7 @@
                 if (usingJetpack && !isFlipped) {
                     const angle = car.chassis.angle;
                     const verticalForce = -0.02 * car.chassis.mass * world.gravity.y;
-                    const horizontalForce = 0.005 * car.chassis.mass; 
+                    const horizontalForce = 0.05 * car.chassis.mass; 
                     const force = { x: Math.cos(angle) * horizontalForce - Math.sin(angle) * verticalForce, y: Math.sin(angle) * horizontalForce + Math.cos(angle) * verticalForce };
                     Body.applyForce(car.chassis, car.chassis.position, force);
                     jetpackFuel = Math.max(0, jetpackFuel - 0.5);
