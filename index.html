@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hill Climb Racer - Final Fixes</title>
+    <title>Hill Climb Racer - Final Flip Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         /* Basic styles for the page */
@@ -299,7 +299,7 @@
             color: white;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* MODIFICATION: Aligns content to top */
             align-items: center;
             text-align: center;
             z-index: 100;
@@ -308,6 +308,7 @@
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
             padding: 20px;
+            padding-top: 5vh; /* MODIFICATION: Adds padding from the top */
             box-sizing: border-box;
             overflow-y: auto;
         }
@@ -318,14 +319,14 @@
         }
 
         .modal-screen h1 {
-            font-size: 3em;
+            font-size: clamp(2.5em, 8vmin, 3.5em);
             margin: 0;
             text-shadow: 0 0 20px #ff00de;
         }
 
         .modal-screen h2 {
-            font-size: 1.5em;
-            margin: 20px 0 10px 0;
+            font-size: clamp(1.2em, 5vmin, 1.5em);
+            margin: 15px 0 10px 0;
             width: 100%;
             text-align: center;
         }
@@ -394,6 +395,7 @@
             transition: all 0.2s ease;
             width: 180px;
             box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         .selection-option:hover, .selection-option.selected {
@@ -485,16 +487,9 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
-        
-        @media (orientation: portrait) and (max-height: 800px) {
-             .modal-screen h2 {
-                margin: 10px 0 5px 0;
-             }
-             .selection-container {
-                margin-top: 5px;
-             }
-        }
+
     </style>
+</head>
 <body>
     <div id="sky-gradient"></div>
     <div id="game-wrapper">
@@ -633,7 +628,7 @@
             let previousScreen = 'start';
             
             // --- Stunt, Combo, Challenge, & Flip Mechanic State ---
-            let airTime = 0, totalRotation = 0, lastAngle = 0, justLanded = false, landingVelocity = 0;
+            let airTime = 0, totalRotation = 0, lastAngle = 0, justLanded = false, landingVelocity = 0, heightAboveGround = 0;
             let isFlipped = false, flipTimer = 0;
             const FLIP_RECOVERY_TIME = 6000; // 6 seconds
             let dailyChallenges = [];
@@ -818,7 +813,7 @@
                 isGameOver = false; groundSegments = []; fuelCans = []; coins = []; mines = []; healthPacks = []; jetpackCans = [];
                 isFlipped = false; flipTimer = 0;
                 challengeProgress = { flips: 0, coins: 0, healthPacks: 0, mines: 0 };
-                keys = {}; isGasPressed = false; isBrakePressed = false;
+                keys = {}; isGasPressed = false; isBrakePressed = false; isJetpackPressed = false;
                 startScreen.classList.remove('active');
                 gameOverScreen.classList.remove('active');
                 uiOverlay.style.display = 'flex';
@@ -996,6 +991,21 @@
                 
                 const onGround = Query.collides(car.wheelA, groundSegments.map(s => s.body)).length > 0 || Query.collides(car.wheelB, groundSegments.map(s => s.body)).length > 0;
                 
+                // --- Height above ground calculation (with safety check) ---
+                heightAboveGround = 0;
+                if (!onGround) {
+                    const rayStartA = car.wheelA.position;
+                    const rayStartB = car.wheelB.position;
+                    const groundBodies = groundSegments.map(s => s.body);
+                    const collisionsA = Query.ray(groundBodies, rayStartA, { x: rayStartA.x, y: rayStartA.y + 1000 });
+                    const collisionsB = Query.ray(groundBodies, rayStartB, { x: rayStartB.x, y: rayStartB.y + 1000 });
+                    let minDistance = Infinity;
+                    // --- SAFETY CHECK ---
+                    if (collisionsA.length > 0 && collisionsA[0].point) minDistance = Math.min(minDistance, Vector.magnitude(Vector.sub(collisionsA[0].point, rayStartA)));
+                    if (collisionsB.length > 0 && collisionsB[0].point) minDistance = Math.min(minDistance, Vector.magnitude(Vector.sub(collisionsB[0].point, rayStartB)));
+                    if(minDistance !== Infinity) heightAboveGround = minDistance;
+                }
+                
                 const wasOnGround = airTime === 0;
                 justLanded = !wasOnGround && onGround;
                  if (justLanded) {
@@ -1015,30 +1025,36 @@
                 
                 handleFlipState();
                 
-                // Control Logic
+                // --- REWORKED Control Logic ---
                 let torque = 0;
-                if (!onGround || isFlipped) {
-                    if (isAccelerating) torque += 0.05;
-                    if (isBraking) torque -= 0.05;
-                    car.chassis.torque = torque;
-                }
-                
-                if (onGround && !isFlipped) {
+                if (isFlipped) {
+                    // State 1: Flipped on ground - apply powerful recovery torque
+                    const torqueValue = 3.7; 
+                    if (isAccelerating) torque += torqueValue;
+                    if (isBraking) torque -= torqueValue;
+                    Body.set(car.chassis, 'torque', torque);
+
+                } else if (!onGround) {
+                    // State 2: In the air - apply dynamic torque based on height
+                    const isHighInAir = heightAboveGround > 100;
+                    const torqueValue = isHighInAir ? 5.5 : 0.05;
+                    if (isAccelerating) torque += torqueValue;
+                    if (isBraking) torque -= torqueValue;
+                    Body.set(car.chassis, 'torque', torque);
+                    airTime += engine.timing.deltaTime;
+                    totalRotation += car.chassis.angle - lastAngle;
+
+                } else {
+                    // State 3: Normal on-ground driving
                     if (isAccelerating) { Body.setAngularVelocity(car.wheelA, car.wheelA.angularVelocity + engineTorque); Body.setAngularVelocity(car.wheelB, car.wheelB.angularVelocity + engineTorque); fuel -= 0.03; }
                     if (isBraking) { Body.setAngularVelocity(car.wheelA, car.wheelA.angularVelocity - engineTorque * 0.5); Body.setAngularVelocity(car.wheelB, car.wheelB.angularVelocity - engineTorque * 0.5); }
-                } else {
-                    if (!isFlipped) {
-                        airTime += engine.timing.deltaTime;
-                        const deltaAngle = car.chassis.angle - lastAngle;
-                        totalRotation += deltaAngle;
-                    }
                 }
                 
                 lastAngle = car.chassis.angle;
 
                 if(audioInitialized) { const targetGain = (isAccelerating && onGround && !isFlipped) ? 0.35 : 0; const targetFreq = (isAccelerating && onGround && !isFlipped) ? (40 + Math.min(60, 30 * (Math.abs(car.chassis.velocity.x) / 20))) : 40; engineSound.gainNode.gain.setTargetAtTime(targetGain, audioContext.currentTime, 0.1); engineSound.frequency.setTargetAtTime(targetFreq, audioContext.currentTime, 0.1); }
 
-                if (!isFlipped) fuel -= 0.005; // Don't consume fuel while flipped
+                if (!isFlipped) fuel -= 0.005;
                 maxTravel = Math.max(maxTravel, car.chassis.position.x);
                 score = Math.max(0, Math.floor(maxTravel / 100) - 1);
                 scoreElement.textContent = `Score: ${score}`;
@@ -1103,25 +1119,28 @@
             }
             
             function handleFlipState() {
-                const currentlyFlipped = Math.cos(car.chassis.angle) < -0.5;
+                const chassisAngle = car.chassis.angle;
+                const upVector = { x: -Math.sin(chassisAngle), y: Math.cos(chassisAngle) };
+                const isUpsideDown = upVector.y < -0.5;
                 const chassisOnGround = Query.collides(car.chassis, groundSegments.map(s => s.body)).length > 0;
+                const isStuck = isUpsideDown && chassisOnGround;
 
-                if (currentlyFlipped && chassisOnGround && !isFlipped) {
+                if (isStuck && !isFlipped) {
                     isFlipped = true;
                     flipTimer = FLIP_RECOVERY_TIME;
                     flipTimerContainer.style.display = 'block';
                 }
-                
+
                 if (isFlipped) {
-                    if (!currentlyFlipped || !chassisOnGround) {
+                    if (isStuck) {
+                        flipTimer -= engine.timing.deltaTime;
+                        flipTimerBar.style.width = `${Math.max(0, (flipTimer / FLIP_RECOVERY_TIME) * 100)}%`;
+                        if (flipTimer <= 0) {
+                            health = 0;
+                        }
+                    } else {
                         isFlipped = false;
                         flipTimerContainer.style.display = 'none';
-                    } else {
-                        flipTimer -= engine.timing.deltaTime;
-                        flipTimerBar.style.width = `${(flipTimer / FLIP_RECOVERY_TIME) * 100}%`;
-                        if (flipTimer <= 0) {
-                            health = 0; // End game
-                        }
                     }
                 }
             }
@@ -1166,7 +1185,7 @@
                 const setupButton = (button, setPressed) => { const press = (e) => { e.preventDefault(); setPressed(true); }; const release = (e) => { e.preventDefault(); setPressed(false); }; button.addEventListener('touchstart', press, { passive: false }); button.addEventListener('touchend', release); button.addEventListener('mousedown', press); button.addEventListener('mouseup', release); button.addEventListener('mouseleave', release); };
                 setupButton(gasButton, (pressed) => isGasPressed = pressed);
                 setupButton(brakeButton, (pressed) => isBrakePressed = pressed);
-                setupButton(jetpackButton, (pressed) => keys['Space'] = pressed); // Jetpack button mimics spacebar
+                setupButton(jetpackButton, (pressed) => isJetpackPressed = pressed);
                 Events.on(engine, 'collisionStart', (event) => { if (!isGameOver) event.pairs.forEach(pair => checkCollisions(pair)); });
             }
 
