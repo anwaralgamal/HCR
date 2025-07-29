@@ -1037,7 +1037,7 @@
                 } else if (!onGround) {
                     // State 2: In the air - apply dynamic torque based on height
                     const isHighInAir = heightAboveGround > 100;
-                    const torqueValue = isHighInAir ? 5.5 : 0.05;
+                    const torqueValue = isHighInAir ? 0.5 : 0.05;
                     if (isAccelerating) torque += torqueValue;
                     if (isBraking) torque -= torqueValue;
                     Body.set(car.chassis, 'torque', torque);
