@@ -102,27 +102,28 @@
             to { opacity: 1; transform: scale(1); }
         }
         
-        /* [NEW] Level Up Animation */
-        .level-up-text {
+        .celebration-text {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 4rem;
             font-weight: bold;
-            color: #4ade80; /* Green color */
             text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
             pointer-events: none;
             z-index: 2000;
             opacity: 0;
             transition: opacity 0.5s ease-out;
         }
+        
+        #level-up-text { color: #4ade80; } /* Green */
+        #combo-text { color: #fb923c; } /* Orange */
 
-        .level-up-text.show {
-            animation: level-up-animation 1.5s ease-out forwards;
+        .celebration-text.show {
+            animation: celebration-animation 1.5s ease-out forwards;
         }
 
-        @keyframes level-up-animation {
+        @keyframes celebration-animation {
             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
@@ -173,8 +174,9 @@
         <footer id="piece-selection" class="flex justify-around items-center mt-4 sm:mt-6 h-28 sm:h-32"></footer>
     </div>
 
-    <!-- [NEW] Level Up Text -->
-    <div id="level-up-text" class="level-up-text">Level Up!</div>
+    <!-- Celebration Text Elements -->
+    <div id="level-up-text" class="celebration-text">Level Up!</div>
+    <div id="combo-text" class="celebration-text">Combo!</div>
 
     <!-- Game Over Modal -->
     <div id="game-over-modal" class="game-over-modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
@@ -201,12 +203,13 @@
             const finalScoreElement = document.getElementById('final-score');
             const newHighScoreText = document.getElementById('new-high-score-text');
             const restartButton = document.getElementById('restart-button');
-            const levelUpTextElement = document.getElementById('level-up-text'); // [NEW]
+            const levelUpTextElement = document.getElementById('level-up-text');
+            const comboTextElement = document.getElementById('combo-text');
 
             // --- Game Constants ---
             const BOARD_SIZE = 8;
             const PIECE_HOLDER_COUNT = 3;
-            const SCORE_PER_LEVEL = 200;
+            const SCORE_PER_LEVEL = 100;
             const GAP = 3; 
             const PADDING = 5;
 
@@ -246,9 +249,8 @@
             // --- Game Initialization ---
             function init() {
                 score = 0;
-                level = 1;
                 isNewHighScore = false;
-                loadTopScore();
+                loadSavedData(); // Load both top score and last level
                 updateScore(0, true);
                 
                 board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
@@ -289,18 +291,20 @@
                 const newLevel = Math.floor(score / SCORE_PER_LEVEL) + 1;
                 if (newLevel > level) {
                     level = newLevel;
-                    // [NEW] Trigger level up animation
+                    localStorage.setItem('blockBlastLastLevel', level); // Save new highest level
                     levelUpTextElement.classList.add('show');
                     setTimeout(() => {
                         levelUpTextElement.classList.remove('show');
-                    }, 1500); // Duration of the animation
+                    }, 1500);
                 }
                 levelElement.textContent = level;
             }
 
-            function loadTopScore() {
+            function loadSavedData() {
                 topScore = parseInt(localStorage.getItem('blockBlastTopScore')) || 0;
+                level = parseInt(localStorage.getItem('blockBlastLastLevel')) || 1; // Start from saved level
                 topScoreElement.textContent = topScore;
+                levelElement.textContent = level;
             }
 
             function handleGameOver() {
@@ -447,10 +451,15 @@
 
             function clearLines(rows, cols) {
                 let linesCleared = rows.length + cols.length;
+                let bonus = 0;
                 if (rows.length > 0 && cols.length > 0) {
-                    linesCleared++;
+                    bonus = linesCleared * BOARD_SIZE * 2; // Increased bonus for combos
+                    comboTextElement.classList.add('show');
+                    setTimeout(() => {
+                        comboTextElement.classList.remove('show');
+                    }, 1500);
                 }
-                updateScore(linesCleared * BOARD_SIZE * 2);
+                updateScore(linesCleared * BOARD_SIZE * 2 + bonus);
 
                 const clearedCells = new Set();
                 rows.forEach(r => {
