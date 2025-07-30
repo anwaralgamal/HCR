@@ -102,6 +102,32 @@
             to { opacity: 1; transform: scale(1); }
         }
         
+        /* [NEW] Level Up Animation */
+        .level-up-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+            color: #4ade80; /* Green color */
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            pointer-events: none;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .level-up-text.show {
+            animation: level-up-animation 1.5s ease-out forwards;
+        }
+
+        @keyframes level-up-animation {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+        
         /* Block Colors */
         .color-1 { background: linear-gradient(145deg, #f87171, #dc2626); box-shadow: inset 0 0 5px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.3); }
         .color-2 { background: linear-gradient(145deg, #60a5fa, #2563eb); box-shadow: inset 0 0 5px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.3); }
@@ -147,6 +173,9 @@
         <footer id="piece-selection" class="flex justify-around items-center mt-4 sm:mt-6 h-28 sm:h-32"></footer>
     </div>
 
+    <!-- [NEW] Level Up Text -->
+    <div id="level-up-text" class="level-up-text">Level Up!</div>
+
     <!-- Game Over Modal -->
     <div id="game-over-modal" class="game-over-modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full">
@@ -172,11 +201,12 @@
             const finalScoreElement = document.getElementById('final-score');
             const newHighScoreText = document.getElementById('new-high-score-text');
             const restartButton = document.getElementById('restart-button');
+            const levelUpTextElement = document.getElementById('level-up-text'); // [NEW]
 
             // --- Game Constants ---
             const BOARD_SIZE = 8;
             const PIECE_HOLDER_COUNT = 3;
-            const SCORE_PER_LEVEL = 300;
+            const SCORE_PER_LEVEL = 200;
             const GAP = 3; 
             const PADDING = 5;
 
@@ -188,6 +218,7 @@
             let currentPieces = [];
             let draggingPiece = null;
             let dragElement = null;
+            let isNewHighScore = false;
 
             // --- Piece Definitions by Difficulty ---
             const EASY_PIECES = [
@@ -216,6 +247,7 @@
             function init() {
                 score = 0;
                 level = 1;
+                isNewHighScore = false;
                 loadTopScore();
                 updateScore(0, true);
                 
@@ -242,6 +274,14 @@
                     score += points;
                 }
                 scoreElement.textContent = score;
+
+                if (score > topScore) {
+                    topScore = score;
+                    topScoreElement.textContent = topScore;
+                    localStorage.setItem('blockBlastTopScore', topScore);
+                    isNewHighScore = true;
+                }
+
                 updateLevel();
             }
 
@@ -249,6 +289,11 @@
                 const newLevel = Math.floor(score / SCORE_PER_LEVEL) + 1;
                 if (newLevel > level) {
                     level = newLevel;
+                    // [NEW] Trigger level up animation
+                    levelUpTextElement.classList.add('show');
+                    setTimeout(() => {
+                        levelUpTextElement.classList.remove('show');
+                    }, 1500); // Duration of the animation
                 }
                 levelElement.textContent = level;
             }
@@ -258,54 +303,15 @@
                 topScoreElement.textContent = topScore;
             }
 
-            function saveTopScore() {
-                if (score > topScore) {
-                    topScore = score;
-                    localStorage.setItem('blockBlastTopScore', topScore);
+            function handleGameOver() {
+                if (isNewHighScore) {
                     newHighScoreText.classList.remove('hidden');
                     newHighScoreText.classList.add('new-high-score');
                 }
-            }
-
-            function renderBoard() {
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
-                        const cell = gameBoardElement.children[r * BOARD_SIZE + c];
-                        cell.className = 'grid-cell';
-                        cell.style.backgroundColor = ''; 
-                        
-                        const colorClass = board[r][c];
-                        if (colorClass) {
-                            cell.classList.add(colorClass);
-                        }
-                    }
-                }
+                finalScoreElement.textContent = score;
+                gameOverModal.classList.remove('hidden');
             }
             
-            function createPieceElement(piece) {
-                const container = document.createElement('div');
-                container.classList.add('piece-container');
-                const grid = document.createElement('div');
-                grid.classList.add('piece-grid');
-                grid.style.gridTemplateColumns = `repeat(${piece.w}, 1fr)`;
-                grid.style.gridTemplateRows = `repeat(${piece.h}, 1fr)`;
-                const maxDim = Math.max(piece.w, piece.h);
-                grid.style.width = `${(piece.w / maxDim) * 80}%`;
-                grid.style.height = `${(piece.h / maxDim) * 80}%`;
-                for (let r = 0; r < piece.h; r++) {
-                    for (let c = 0; c < piece.w; c++) {
-                        const cell = document.createElement('div');
-                        cell.classList.add('piece-cell');
-                        if (piece.shape[r][c]) {
-                            cell.classList.add(piece.color);
-                        }
-                        grid.appendChild(cell);
-                    }
-                }
-                container.appendChild(grid);
-                return container;
-            }
-
             function generateNewPieces() {
                 pieceSelectionElement.innerHTML = '';
                 currentPieces = [];
@@ -350,12 +356,6 @@
                 }
                 return true;
             }
-
-            function handleGameOver() {
-                saveTopScore();
-                finalScoreElement.textContent = score;
-                gameOverModal.classList.remove('hidden');
-            }
             
             function canPlacePiece(piece, startRow, startCol) {
                 for (let r = 0; r < piece.h; r++) {
@@ -372,6 +372,30 @@
                     }
                 }
                 return true;
+            }
+            
+            function createPieceElement(piece) {
+                const container = document.createElement('div');
+                container.classList.add('piece-container');
+                const grid = document.createElement('div');
+                grid.classList.add('piece-grid');
+                grid.style.gridTemplateColumns = `repeat(${piece.w}, 1fr)`;
+                grid.style.gridTemplateRows = `repeat(${piece.h}, 1fr)`;
+                const maxDim = Math.max(piece.w, piece.h);
+                grid.style.width = `${(piece.w / maxDim) * 80}%`;
+                grid.style.height = `${(piece.h / maxDim) * 80}%`;
+                for (let r = 0; r < piece.h; r++) {
+                    for (let c = 0; c < piece.w; c++) {
+                        const cell = document.createElement('div');
+                        cell.classList.add('piece-cell');
+                        if (piece.shape[r][c]) {
+                            cell.classList.add(piece.color);
+                        }
+                        grid.appendChild(cell);
+                    }
+                }
+                container.appendChild(grid);
+                return container;
             }
 
             function placePiece(piece, startRow, startCol) {
@@ -451,6 +475,21 @@
                     });
                     renderBoard();
                 }, 500);
+            }
+            
+            function renderBoard() {
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        const cell = gameBoardElement.children[r * BOARD_SIZE + c];
+                        cell.className = 'grid-cell';
+                        cell.style.backgroundColor = ''; 
+                        
+                        const colorClass = board[r][c];
+                        if (colorClass) {
+                            cell.classList.add(colorClass);
+                        }
+                    }
+                }
             }
 
             // --- Drag and Drop Handling ---
