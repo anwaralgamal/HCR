@@ -502,9 +502,16 @@
             }
 
             // --- Drag and Drop Handling ---
-            function startDrag(e) {
+            async function startDrag(e) {
                 e.preventDefault();
                 const target = e.currentTarget;
+
+                if (!isAudioReady) {
+                    await Tone.start();
+                    isAudioReady = true;
+                    console.log('Audio context started');
+                }
+                
                 const pieceId = parseInt(target.dataset.pieceId);
                 const piece = currentPieces.find(p => p && p.id === pieceId);
                 if (!piece) return;
@@ -613,17 +620,6 @@
                 if (isAudioReady) sounds.click.triggerAttackRelease("C2", "0.1");
                 init();
             });
-            
-            // [FIX] Initialize audio on the first user interaction anywhere on the page
-            async function initAudio() {
-                if (!isAudioReady) {
-                    await Tone.start();
-                    isAudioReady = true;
-                    console.log('Audio context started');
-                }
-            }
-            document.body.addEventListener('pointerdown', initAudio, { once: true });
-
 
             // --- Start Game ---
             init();
