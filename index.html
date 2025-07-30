@@ -210,7 +210,7 @@
             // --- Game Constants ---
             const BOARD_SIZE = 8;
             const PIECE_HOLDER_COUNT = 3;
-            const SCORE_PER_LEVEL = 100;
+            const SCORE_PER_LEVEL = 200;
             const GAP = 3; 
             const PADDING = 5;
 
@@ -226,7 +226,7 @@
             let isNewHighScore = false;
             let isAudioReady = false;
 
-            // --- [NEW] Sound Synthesis ---
+            // --- Sound Synthesis ---
             const sounds = {
                 place: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 0.1 } }).toDestination(),
                 clear: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.2, release: 0.2 } }).toDestination(),
@@ -502,12 +502,7 @@
             }
 
             // --- Drag and Drop Handling ---
-            async function startDrag(e) {
-                if (!isAudioReady) {
-                    await Tone.start();
-                    isAudioReady = true;
-                    console.log('Audio context started');
-                }
+            function startDrag(e) {
                 e.preventDefault();
                 const target = e.currentTarget;
                 const pieceId = parseInt(target.dataset.pieceId);
@@ -618,6 +613,17 @@
                 if (isAudioReady) sounds.click.triggerAttackRelease("C2", "0.1");
                 init();
             });
+            
+            // [FIX] Initialize audio on the first user interaction anywhere on the page
+            async function initAudio() {
+                if (!isAudioReady) {
+                    await Tone.start();
+                    isAudioReady = true;
+                    console.log('Audio context started');
+                }
+            }
+            document.body.addEventListener('pointerdown', initAudio, { once: true });
+
 
             // --- Start Game ---
             init();
