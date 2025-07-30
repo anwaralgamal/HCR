@@ -16,6 +16,11 @@
             --shadow-color: rgba(0, 0, 0, 0.5);
         }
 
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             touch-action: none; /* Prevents scrolling on touch devices */
@@ -60,8 +65,6 @@
         
         .piece-grid {
             display: grid;
-            width: 80%; /* Use a percentage of the container */
-            height: 80%;
         }
 
         .piece-cell {
@@ -78,11 +81,43 @@
         .cell-clearing {
             animation: clear-animation 0.5s ease-out forwards;
         }
+        
+        /* [NEW] Animations */
+        .cell-placed {
+            animation: place-pop 0.3s ease-out;
+        }
+        
+        .board-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        .power-up-pulse {
+            animation: pulse-bright 1s ease-out;
+        }
 
         @keyframes clear-animation {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.2); opacity: 0.5; background-color: #fff; }
             100% { transform: scale(0); opacity: 0; }
+        }
+        
+        @keyframes place-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        
+        @keyframes pulse-bright {
+            0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+            70% { box-shadow: 0 0 15px 10px rgba(250, 204, 21, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
         }
 
         .game-over-modal {
@@ -130,6 +165,17 @@
             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
         }
+
+        .power-up-button {
+            transition: all 0.2s ease;
+        }
+        .power-up-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .power-up-button.active {
+            box-shadow: 0 0 15px 5px #facc15;
+        }
         
         /* Block Colors */
         .color-1 { background: linear-gradient(145deg, #f87171, #dc2626); box-shadow: inset 0 0 5px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.3); }
@@ -145,7 +191,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-4">
+<body class="bg-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-2 sm:p-4">
 
     <!-- Start Game Modal -->
     <div id="start-modal" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex flex-col items-center justify-center z-50 p-4">
@@ -163,14 +209,18 @@
         </div>
     </div>
 
-    <div id="game-container" class="w-full max-w-md mx-auto hidden">
-        <!-- Header: Title, Score, Top Score, and Level -->
-        <header class="mb-4 p-4 bg-gray-900 rounded-lg shadow-lg">
+    <div id="game-container" class="w-full max-w-md mx-auto hidden flex flex-col h-full">
+        <!-- Header -->
+        <header class="mb-2 sm:mb-4 p-4 bg-gray-900 rounded-lg shadow-lg">
             <div class="flex justify-between items-center mb-2">
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-cyan-400">Block Blast</h1>
-                 <div class="text-right">
+                 <div class="text-right w-1/3">
                     <span class="text-xs sm:text-sm font-semibold text-gray-400">Level</span>
                     <div id="level" class="text-lg sm:text-xl font-bold text-white">1</div>
+                    <!-- XP Bar -->
+                    <div class="w-full bg-gray-700 rounded-full h-1.5 mt-1">
+                        <div id="xp-progress" class="bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-between items-center text-center mt-2">
@@ -184,17 +234,47 @@
                 </div>
             </div>
         </header>
+        
+        <!-- Daily Challenge -->
+        <div id="daily-challenge-container" class="mb-2 sm:mb-4 p-3 bg-gray-700 rounded-lg shadow-lg text-center">
+            <p class="text-xs sm:text-sm font-semibold text-cyan-400">Daily Challenge</p>
+            <p id="challenge-text" class="text-sm sm:text-base text-white"></p>
+            <div class="w-full bg-gray-900 rounded-full h-2.5 mt-1">
+                <div id="challenge-progress" class="bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
 
-        <!-- Game Board -->
-        <main id="game-board" class="game-board mx-auto"></main>
+        <!-- Game Board and Power-ups -->
+        <div class="flex justify-center items-center">
+            <main id="game-board" class="game-board mx-auto"></main>
+            <!-- Power-ups -->
+            <div id="power-ups" class="flex flex-col space-y-4 ml-4">
+                <button id="bomb-button" class="power-up-button bg-gray-700 p-2 rounded-full shadow-lg relative" disabled>
+                    <svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14.12 14.12a9 9 0 1 1 0-12.24M12 12l6 6M12 12l-6-6"/>
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M12 2v4M12 18v4M22 12h-4M6 12H2"/>
+                    </svg>
+                    <span id="bomb-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </button>
+                <button id="swap-button" class="power-up-button bg-gray-700 p-2 rounded-full shadow-lg relative" disabled>
+                    <svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 10h-5V5M4 14h5v5"/>
+                        <path d="M6 18l-2-2 4-4 2 2-4 4zM18 6l2 2-4 4-2-2 4-4z"/>
+                        <path d="M14 4l2.5 2.5M10 20l-2.5-2.5"/>
+                    </svg>
+                    <span id="swap-count" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </button>
+            </div>
+        </div>
 
         <!-- Piece Selection Area -->
-        <footer id="piece-selection" class="flex justify-around items-center mt-4 sm:mt-6 h-28 sm:h-32"></footer>
+        <footer id="piece-selection" class="flex justify-around items-center mt-auto h-24 sm:h-32"></footer>
     </div>
 
     <!-- Celebration Text Elements -->
     <div id="level-up-text" class="celebration-text">Level Up!</div>
-    <div id="combo-text" class="celebration-text">Combo!</div>
+    <div id="combo-text" class="celebration-text"></div>
 
     <!-- Game Over Modal -->
     <div id="game-over-modal" class="game-over-modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
@@ -221,6 +301,7 @@
             const scoreElement = document.getElementById('score');
             const topScoreElement = document.getElementById('top-score');
             const levelElement = document.getElementById('level');
+            const xpProgressElement = document.getElementById('xp-progress');
             const pieceSelectionElement = document.getElementById('piece-selection');
             const gameOverModal = document.getElementById('game-over-modal');
             const finalScoreElement = document.getElementById('final-score');
@@ -228,11 +309,16 @@
             const restartButton = document.getElementById('restart-button');
             const levelUpTextElement = document.getElementById('level-up-text');
             const comboTextElement = document.getElementById('combo-text');
+            const bombButton = document.getElementById('bomb-button');
+            const bombCountElement = document.getElementById('bomb-count');
+            const swapButton = document.getElementById('swap-button');
+            const swapCountElement = document.getElementById('swap-count');
+            const challengeTextElement = document.getElementById('challenge-text');
+            const challengeProgressElement = document.getElementById('challenge-progress');
 
             // --- Game Constants ---
             const BOARD_SIZE = 8;
             const PIECE_HOLDER_COUNT = 3;
-            const SCORE_PER_LEVEL = 200;
             const GAP = 3; 
             const PADDING = 5;
 
@@ -240,13 +326,21 @@
             let board = [];
             let score = 0;
             let topScore = 0;
-            let level = 1;
-            let startingLevel = 1;
+            let currentLevel = 1;
+            let xp = 0;
+            let xpForNextLevel = 100;
+            let consecutiveClears = 0;
             let currentPieces = [];
             let draggingPiece = null;
             let dragElement = null;
             let isNewHighScore = false;
             let isAudioReady = false;
+            let bombCount = 0;
+            let swapCount = 0;
+            let isBombMode = false;
+            let dailyChallenge = {};
+            let celebrationQueue = [];
+            let isCelebrating = false;
 
             // --- Sound Synthesis ---
             const sounds = {
@@ -255,15 +349,16 @@
                 combo: new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fmsquare' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 } }).toDestination(),
                 levelUp: new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.2, release: 0.3 } }).toDestination(),
                 gameOver: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.1, release: 0.5 } }).toDestination(),
-                click: new Tone.MembraneSynth().toDestination()
+                click: new Tone.MembraneSynth().toDestination(),
+                powerUp: new Tone.Synth({ oscillator: { type: 'pulse' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+                bomb: new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.005, decay: 0.3, sustain: 0.1 } }).toDestination(),
+                swoosh: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0 } }).toDestination()
             };
 
             // --- Piece Definitions by Difficulty ---
             const EASY_PIECES = [
-                { shape: [[1]], w: 1, h: 1, color: 'color-1' },
-                { shape: [[1, 1]], w: 2, h: 1, color: 'color-2' },
-                { shape: [[1], [1]], w: 1, h: 2, color: 'color-2' },
-                { shape: [[1, 1], [1, 1]], w: 2, h: 2, color: 'color-5' },
+                { shape: [[1]], w: 1, h: 1, color: 'color-1' }, { shape: [[1, 1]], w: 2, h: 1, color: 'color-2' },
+                { shape: [[1], [1]], w: 1, h: 2, color: 'color-2' }, { shape: [[1, 1], [1, 1]], w: 2, h: 2, color: 'color-5' },
                 { shape: [[1, 1, 1]], w: 3, h: 1, color: 'color-3' },
             ];
 
@@ -275,11 +370,25 @@
                 { shape: [[1, 1], [0, 1]], w: 2, h: 2, color: 'color-6' }, { shape: [[1, 1, 1], [0, 1, 0]], w: 3, h: 2, color: 'color-7' },
                 { shape: [[1, 1, 1], [1, 0, 0], [1, 0, 0]], w: 3, h: 3, color: 'color-1' },
             ];
+            
+            // --- Daily Challenges ---
+            const CHALLENGES = [
+                { id: 1, text: (target) => `Clear ${target} lines`, target: 15, key: 'linesCleared', reward: 5000 },
+                { id: 2, text: (target) => `Score ${target} points`, target: 10000, key: 'score', reward: 7500 },
+                { id: 3, text: (target) => `Achieve a Combo x${target}`, target: 4, key: 'maxCombo', reward: 10000 },
+                { id: 4, text: (target) => `Place ${target} blocks`, target: 100, key: 'blocksPlaced', reward: 5000 },
+            ];
 
             // --- Game Initialization ---
             function init() {
                 score = 0;
+                xp = 0;
                 isNewHighScore = false;
+                consecutiveClears = 0;
+                bombCount = 0;
+                swapCount = 0;
+                updatePowerUpUI();
+                setupDailyChallenge();
                 loadSavedData();
                 updateScore(0, true);
                 
@@ -312,32 +421,54 @@
                     localStorage.setItem('blockBlastTopScore', topScore);
                     isNewHighScore = true;
                 }
-                updateLevel();
+                updateChallengeProgress('score', score);
             }
 
-            function updateLevel() {
-                const levelsGained = Math.floor(score / SCORE_PER_LEVEL);
-                const newLevel = startingLevel + levelsGained;
-                if (newLevel > level) {
-                    level = newLevel;
-                    localStorage.setItem('blockBlastLastLevel', level);
-                    levelUpTextElement.classList.add('show');
-                    if (isAudioReady) sounds.levelUp.triggerAttackRelease(["C4", "E4", "G4", "C5"], "0.4");
-                    setTimeout(() => {
-                        levelUpTextElement.classList.remove('show');
-                    }, 1500);
+            function addXP(amount) {
+                xp += amount;
+                if (xp >= xpForNextLevel) {
+                    currentLevel++;
+                    xp -= xpForNextLevel;
+                    calculateXpForNextLevel();
+                    localStorage.setItem('blockBlastLastLevel', currentLevel);
+                    
+                    if (currentLevel % 5 === 0) {
+                        swapCount++;
+                        updatePowerUpUI();
+                        if(isAudioReady) sounds.powerUp.triggerAttackRelease("C5", "0.2");
+                        swapButton.classList.add('power-up-pulse');
+                        setTimeout(() => swapButton.classList.remove('power-up-pulse'), 1000);
+                    }
+                    if (currentLevel % 8 === 0) {
+                        bombCount++;
+                        updatePowerUpUI();
+                        if(isAudioReady) sounds.powerUp.triggerAttackRelease("G4", "0.2");
+                        bombButton.classList.add('power-up-pulse');
+                        setTimeout(() => bombButton.classList.remove('power-up-pulse'), 1000);
+                    }
+                    queueCelebration('levelUp');
                 }
-                levelElement.textContent = level;
+                updateLevelUI();
+            }
+
+            function updateLevelUI() {
+                levelElement.textContent = currentLevel;
+                const progress = Math.min((xp / xpForNextLevel) * 100, 100);
+                xpProgressElement.style.width = `${progress}%`;
+            }
+
+            function calculateXpForNextLevel() {
+                xpForNextLevel = Math.floor(70 * Math.pow(currentLevel, 1.1));
             }
 
             function loadSavedData() {
                 topScore = parseInt(localStorage.getItem('blockBlastTopScore')) || 0;
-                startingLevel = parseInt(localStorage.getItem('blockBlastLastLevel')) || 1;
-                level = startingLevel;
+                currentLevel = parseInt(localStorage.getItem('blockBlastLastLevel')) || 1;
+                calculateXpForNextLevel();
                 topScoreElement.textContent = topScore;
-                levelElement.textContent = level;
+                updateLevelUI();
             }
-
+            
             function handleGameOver() {
                 if (isAudioReady) sounds.gameOver.triggerAttackRelease("C3", "0.5");
                 if (isNewHighScore) {
@@ -353,8 +484,8 @@
                 currentPieces = [];
                 for (let i = 0; i < PIECE_HOLDER_COUNT; i++) {
                     let piecePool = EASY_PIECES;
-                    if (level >= 3) {
-                        const hardChance = Math.min(0.5 + (level - 3) * 0.1, 0.9);
+                    if (currentLevel >= 5) {
+                        const hardChance = Math.min(0.15 + (currentLevel - 5) * 0.01, 0.80);
                         if (Math.random() < hardChance) {
                             piecePool = HARD_PIECES;
                         }
@@ -410,7 +541,7 @@
                 grid.classList.add('piece-grid');
                 grid.style.gridTemplateColumns = `repeat(${piece.w}, 1fr)`;
                 grid.style.gridTemplateRows = `repeat(${piece.h}, 1fr)`;
-                const maxDim = Math.max(piece.w, piece.h);
+                const maxDim = Math.max(piece.w, piece.h, 2);
                 grid.style.width = `${(piece.w / maxDim) * 80}%`;
                 grid.style.height = `${(piece.h / maxDim) * 80}%`;
                 for (let r = 0; r < piece.h; r++) {
@@ -433,22 +564,34 @@
                 for (let r = 0; r < piece.h; r++) {
                     for (let c = 0; c < piece.w; c++) {
                         if (piece.shape[r][c]) {
-                            board[startRow + r][startCol + c] = piece.color;
+                            const boardRow = startRow + r;
+                            const boardCol = startCol + c;
+                            board[boardRow][boardCol] = piece.color;
                             blocksPlaced++;
+                            const cell = gameBoardElement.children[boardRow * BOARD_SIZE + boardCol];
+                            cell.classList.add('cell-placed');
+                            setTimeout(() => cell.classList.remove('cell-placed'), 300);
                         }
                     }
                 }
                 updateScore(blocksPlaced);
+                addXP(blocksPlaced);
+                updateChallengeProgress('blocksPlaced', blocksPlaced);
                 renderBoard();
                 const pieceIndex = currentPieces.findIndex(p => p && p.id === piece.id);
                 if (pieceIndex !== -1) {
                     currentPieces[pieceIndex] = null;
-                    const pieceElement = pieceSelectionElement.querySelector(`[data-piece-id='${piece.id}']`);
-                    if (pieceElement) {
-                        pieceElement.style.visibility = 'hidden';
-                    }
                 }
-                checkForLineClears();
+                const pieceElement = pieceSelectionElement.querySelector(`[data-piece-id='${piece.id}']`);
+                if (pieceElement) {
+                    pieceElement.style.visibility = 'hidden';
+                }
+                
+                const linesWereCleared = checkForLineClears();
+                if (!linesWereCleared) {
+                    consecutiveClears = 0;
+                }
+
                 if (currentPieces.every(p => p === null)) {
                     setTimeout(generateNewPieces, 300);
                 } else {
@@ -469,23 +612,34 @@
                 }
                 if (rowsToClear.length > 0 || colsToClear.length > 0) {
                     clearLines(rowsToClear, colsToClear);
+                    return true;
                 }
+                return false;
             }
 
             function clearLines(rows, cols) {
+                consecutiveClears++;
                 let linesCleared = rows.length + cols.length;
-                let bonus = 0;
-                if (rows.length > 0 && cols.length > 0) {
-                    bonus = linesCleared * BOARD_SIZE * 3; 
-                    comboTextElement.classList.add('show');
-                    if (isAudioReady) sounds.combo.triggerAttackRelease(["C4", "E4", "G4", "C5"], "0.4");
-                    setTimeout(() => {
-                        comboTextElement.classList.remove('show');
-                    }, 1500);
+                let scoreBonus = 0;
+                let xpBonus = 0;
+
+                if (consecutiveClears > 1) {
+                    scoreBonus = linesCleared * 200 * consecutiveClears;
+                    xpBonus = linesCleared * 10 * consecutiveClears;
+                    queueCelebration('combo', `Combo x${consecutiveClears}!`);
+                } else if (linesCleared > 1) { // [FIX] Clearing 2+ lines is a combo
+                    scoreBonus = linesCleared * 250;
+                    xpBonus = linesCleared * 15;
+                    queueCelebration('combo', 'Combo!');
                 } else if (isAudioReady) {
                     sounds.clear.triggerAttackRelease("A4", "0.2");
                 }
-                updateScore(linesCleared * BOARD_SIZE * 2 + bonus);
+
+                updateScore((linesCleared * 100 + scoreBonus) * currentLevel); // [FIX] Score multiplier is back
+                addXP(linesCleared * 10 + xpBonus);
+                updateChallengeProgress('linesCleared', linesCleared);
+                updateChallengeProgress('maxCombo', consecutiveClears);
+                
                 const clearedCells = new Set();
                 rows.forEach(r => {
                     for (let c = 0; c < BOARD_SIZE; c++) clearedCells.add(`${r}-${c}`);
@@ -525,6 +679,7 @@
 
             // --- Drag and Drop Handling ---
             function startDrag(e) {
+                if (isBombMode) return;
                 e.preventDefault();
                 const target = e.currentTarget;
                 const pieceId = parseInt(target.dataset.pieceId);
@@ -629,6 +784,125 @@
                     cell.style.backgroundColor = '';
                 });
             }
+            
+            // --- Power-Up Logic ---
+            function updatePowerUpUI() {
+                bombCountElement.textContent = bombCount;
+                bombButton.disabled = bombCount <= 0;
+                swapCountElement.textContent = swapCount;
+                swapButton.disabled = swapCount <= 0;
+            }
+
+            function useBomb(targetCell) {
+                if (isAudioReady) sounds.bomb.triggerAttackRelease("0.4");
+                gameBoardElement.classList.add('board-shake');
+                setTimeout(() => gameBoardElement.classList.remove('board-shake'), 500);
+
+                const centerRow = parseInt(targetCell.dataset.row);
+                const centerCol = parseInt(targetCell.dataset.col);
+                let clearedCount = 0;
+                for (let r = centerRow - 1; r <= centerRow + 1; r++) {
+                    for (let c = centerCol - 1; c <= centerCol + 1; c++) {
+                        if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+                            if (board[r][c] !== 0) {
+                                board[r][c] = 0;
+                                clearedCount++;
+                            }
+                            const cell = gameBoardElement.children[r * BOARD_SIZE + c];
+                            cell.classList.add('cell-clearing');
+                        }
+                    }
+                }
+                updateScore(clearedCount * 5);
+                setTimeout(renderBoard, 500);
+                bombCount--;
+                isBombMode = false;
+                bombButton.classList.remove('active');
+                updatePowerUpUI();
+            }
+
+            // --- Daily Challenge Logic ---
+            function setupDailyChallenge() {
+                const today = new Date().toDateString();
+                let savedChallengeData = JSON.parse(localStorage.getItem('dailyChallenge'));
+                
+                if (savedChallengeData && savedChallengeData.date === today) {
+                    const savedChallenge = savedChallengeData.challenge;
+                    const originalChallenge = CHALLENGES.find(c => c.id === savedChallenge.id);
+                    dailyChallenge = { ...originalChallenge, completed: savedChallenge.completed };
+                    challengeProgress = savedChallengeData.progress || 0;
+                } else {
+                    const challengeIndex = new Date().getDate() % CHALLENGES.length;
+                    dailyChallenge = { ...CHALLENGES[challengeIndex], completed: false };
+                    challengeProgress = 0;
+                    localStorage.setItem('dailyChallenge', JSON.stringify({ date: today, challenge: { id: dailyChallenge.id, completed: false }, progress: 0 }));
+                }
+                
+                if (dailyChallenge.completed) {
+                    challengeTextElement.textContent = "Challenge completed today!";
+                    challengeProgressElement.style.width = '100%';
+                } else {
+                    challengeTextElement.textContent = dailyChallenge.text(dailyChallenge.target);
+                    const progressPercentage = Math.min((challengeProgress / dailyChallenge.target) * 100, 100);
+                    challengeProgressElement.style.width = `${progressPercentage}%`;
+                }
+            }
+
+            function updateChallengeProgress(key, value) {
+                if (dailyChallenge.completed || !dailyChallenge.key || dailyChallenge.key !== key) return;
+
+                if (key === 'maxCombo') {
+                    challengeProgress = Math.max(challengeProgress, value);
+                } else {
+                    challengeProgress += value;
+                }
+
+                const progressPercentage = Math.min((challengeProgress / dailyChallenge.target) * 100, 100);
+                challengeProgressElement.style.width = `${progressPercentage}%`;
+
+                if (challengeProgress >= dailyChallenge.target) {
+                    dailyChallenge.completed = true;
+                    updateScore(dailyChallenge.reward);
+                    queueCelebration('combo', 'Challenge Complete!');
+                }
+                
+                const today = new Date().toDateString();
+                localStorage.setItem('dailyChallenge', JSON.stringify({ date: today, challenge: { id: dailyChallenge.id, completed: dailyChallenge.completed }, progress: challengeProgress }));
+            }
+            
+            // --- Celebration Queue Logic ---
+            function queueCelebration(type, text) {
+                celebrationQueue.push({ type, text });
+                if (!isCelebrating) {
+                    showNextCelebration();
+                }
+            }
+
+            function showNextCelebration() {
+                if (celebrationQueue.length === 0) {
+                    isCelebrating = false;
+                    return;
+                }
+                isCelebrating = true;
+                const { type, text } = celebrationQueue.shift();
+                
+                let element;
+                if (type === 'levelUp') {
+                    element = levelUpTextElement;
+                    if (isAudioReady) sounds.levelUp.triggerAttackRelease(["C4", "E4", "G4", "C5"], "0.4");
+                } else {
+                    element = comboTextElement;
+                    element.textContent = text;
+                    if (isAudioReady) sounds.combo.triggerAttackRelease(["C4", "E4", "G4", "C5"], "0.4");
+                }
+                
+                element.classList.add('show');
+                setTimeout(() => {
+                    element.classList.remove('show');
+                    showNextCelebration();
+                }, 1500);
+            }
+
 
             // --- Event Listeners ---
             restartButton.addEventListener('click', () => {
@@ -640,7 +914,6 @@
                 if (!isAudioReady) {
                     await Tone.start();
                     isAudioReady = true;
-                    console.log('Audio context started');
                 }
                 startModal.classList.add('hidden');
                 gameContainer.classList.remove('hidden');
@@ -657,6 +930,29 @@
                 if(isAudioReady) sounds.click.triggerAttackRelease("C2", "0.1");
                 localStorage.setItem('blockBlastTopScore', '0');
                 alert('Top score has been reset to 0.');
+            });
+
+            bombButton.addEventListener('click', () => {
+                if (bombCount > 0) {
+                    isBombMode = !isBombMode;
+                    bombButton.classList.toggle('active');
+                    if (isAudioReady) sounds.click.triggerAttackRelease("E3", "0.1");
+                }
+            });
+
+            swapButton.addEventListener('click', () => {
+                if (swapCount > 0) {
+                    if (isAudioReady) sounds.swoosh.triggerAttackRelease("0.15");
+                    swapCount--;
+                    updatePowerUpUI();
+                    generateNewPieces();
+                }
+            });
+
+            gameBoardElement.addEventListener('click', (e) => {
+                if (isBombMode && e.target.classList.contains('grid-cell')) {
+                    useBomb(e.target);
+                }
             });
 
         });
