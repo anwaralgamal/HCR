@@ -82,7 +82,6 @@
             animation: clear-animation 0.5s ease-out forwards;
         }
         
-        /* [NEW] Animations */
         .cell-placed {
             animation: place-pop 0.3s ease-out;
         }
@@ -209,7 +208,7 @@
         </div>
     </div>
 
-    <div id="game-container" class="w-full max-w-md mx-auto hidden flex flex-col h-full">
+    <div id="game-container" class="w-full max-w-md mx-auto hidden flex flex-col flex-grow">
         <!-- Header -->
         <header class="mb-2 sm:mb-4 p-4 bg-gray-900 rounded-lg shadow-lg">
             <div class="flex justify-between items-center mb-2">
@@ -627,7 +626,7 @@
                     scoreBonus = linesCleared * 200 * consecutiveClears;
                     xpBonus = linesCleared * 10 * consecutiveClears;
                     queueCelebration('combo', `Combo x${consecutiveClears}!`);
-                } else if (linesCleared > 1) { // [FIX] Clearing 2+ lines is a combo
+                } else if (linesCleared > 1) {
                     scoreBonus = linesCleared * 250;
                     xpBonus = linesCleared * 15;
                     queueCelebration('combo', 'Combo!');
@@ -635,7 +634,7 @@
                     sounds.clear.triggerAttackRelease("A4", "0.2");
                 }
 
-                updateScore((linesCleared * 100 + scoreBonus) * currentLevel); // [FIX] Score multiplier is back
+                updateScore((linesCleared * 100 + scoreBonus) * currentLevel);
                 addXP(linesCleared * 10 + xpBonus);
                 updateChallengeProgress('linesCleared', linesCleared);
                 updateChallengeProgress('maxCombo', consecutiveClears);
